@@ -13,7 +13,11 @@
  */
 import { safeDefine } from './elements/base';
 import { SfxCropElement } from './elements/sfx-crop';
+import { SfxCropCanvasElement } from './elements/sfx-crop-canvas';
+import { SfxCropToolbarElement } from './elements/sfx-crop-toolbar';
 
+safeDefine('sfx-crop-canvas', SfxCropCanvasElement);
+safeDefine('sfx-crop-toolbar', SfxCropToolbarElement);
 safeDefine('sfx-crop', SfxCropElement);
 
 export {};

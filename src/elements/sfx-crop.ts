@@ -1,43 +1,58 @@
-import { html, css, type PropertyValues } from 'lit';
-import { property } from 'lit/decorators.js';
-import { CICropView } from '../core/ci-crop-view';
+import { html, css, unsafeCSS, type PropertyValues } from 'lit';
+import { property, state, query } from 'lit/decorators.js';
+import { classMap } from 'lit/directives/class-map.js';
+import { createCropController, type CropController } from '../core/crop-controller';
+import { mergeConfig } from '../core/config';
+import { setupAria } from '../a11y/aria';
+import { createZoomSlider, type ZoomSliderHandle } from '../ui/zoom-slider';
 import type {
   CICropViewConfig,
-  CICropViewInstance,
   CropShapeName,
   CropRect,
   TransformState,
   TransformParams,
 } from '../core/types';
+import type { SfxCropCanvasElement } from './sfx-crop-canvas';
+import type { SfxCropToolbarElement, SfxCropToolbarCommand } from './sfx-crop-toolbar';
 import { SfxCropBaseElement } from './base';
-
-const BOOL_PROPS = [
-  'showGrid', 'showRotateSlider', 'showZoomSlider', 'showShapeSelector',
-  'showRotateButton', 'showFlipButton', 'showFlipVButton', 'showToolbar',
-  'showBleedMargin', 'enableAnimations', 'keyboard', 'pinchZoom', 'wheelZoom',
-] as const;
+// Legacy stylesheet re-used unchanged in P2. CSS token rename (--ci-crop-* →
+// --sfx-cr-*) and per-element `static styles` split happen in P5.
+import CSS_STRING from '../styles/index.css?inline';
 
 /**
- * `<sfx-crop>` — main Scaleflex crop editor element.
+ * `<sfx-crop>` — Scaleflex interactive image-crop editor web component.
  *
- * P1: thin Lit wrapper around the existing {@link CICropView} class.
- * The `CICropView` instance is created in `firstUpdated()` against the host
- * element itself (light DOM). Later phases will move the canvas + toolbar
- * into shadow DOM; the public attribute/event/method surface stays stable.
+ * P2: full open shadow-DOM root. Renders `<sfx-crop-canvas>` plus an optional
+ * `<sfx-crop-toolbar>` and a zoom slider. A {@link createCropController}
+ * instance drives the canvas/pointer/keyboard pipeline using the pre-created
+ * `<canvas>` ref — it never re-creates the canvas node, so pointer capture
+ * and non-passive wheel listeners stay stable across Lit updates.
  *
- * All events bubble and cross shadow boundaries (`composed: true`) so light-DOM
- * listeners catch them regardless of where the element is mounted.
+ * Events (all `bubbles: true, composed: true`):
+ *   - `sfx-crop-ready`  `{ element }`
+ *   - `sfx-crop-image-load` `{ image }`
+ *   - `sfx-crop-change` `TransformState`
+ *   - `sfx-crop-crop-change` `CropRect` (image-pixel coords)
+ *   - `sfx-crop-save`   `{ blob, dataURL, params }` (from imperative `.save()`)
+ *   - `sfx-crop-cancel` (from imperative `.cancel()`)
+ *   - `sfx-crop-error`  `{ error }`
+ *
+ * Theme a consumer via `--sfx-cr-*` custom properties (mapped to the legacy
+ * `--ci-crop-*` tokens until P5) or via `::part(canvas|toolbar|loading|error)`.
  */
 export class SfxCropElement extends SfxCropBaseElement {
-  /**
-   * The Lit render root is `this` (light DOM) in P1 — the legacy `CICropView`
-   * writes directly to the host. P2 will flip to an open shadow root.
-   */
-  protected createRenderRoot(): HTMLElement {
-    return this;
-  }
-
-  static styles = css``;
+  static styles = [
+    css`
+      :host {
+        display: block;
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+      :host([hidden]) { display: none; }
+    `,
+    unsafeCSS(CSS_STRING),
+  ];
 
   // === Attributes mirroring CICropViewConfig ===
 
@@ -64,7 +79,6 @@ export class SfxCropElement extends SfxCropBaseElement {
   @property({ type: String, attribute: 'output-type' }) outputType = 'image/png';
   @property({ type: String, attribute: 'toolbar-position' }) toolbarPosition: 'bottom' | 'top' = 'bottom';
 
-  // `show-grid` accepts "true" / "false" / "interaction" → parsed by hand.
   @property({ type: String, attribute: 'show-grid' }) showGridAttr: string | boolean = 'interaction';
 
   @property({ type: Boolean, attribute: 'show-toolbar' }) showToolbar = true;
@@ -83,34 +97,73 @@ export class SfxCropElement extends SfxCropBaseElement {
   @property({ attribute: 'available-shapes' })
   availableShapes: CropShapeName[] | string = ['free', 'square', 'circle', 'rounded-rect', '16:9', '4:3', '3:2'];
 
-  /**
-   * Optional initial crop rect as JSON string attribute, e.g.
-   * `initial-crop='{"x":0,"y":0,"width":0.5,"height":0.5}'`.
-   */
   @property({ attribute: 'initial-crop' })
   initialCrop: CropRect | string | null = null;
 
-  // === Internal instance ===
-  private instance: CICropViewInstance | null = null;
+  // === Internal reactive state ===
+  @state() private loading = false;
+  @state() private errorMessage: string | null = null;
+
+  // === Queries ===
+  @query('sfx-crop-canvas') private canvasHost!: SfxCropCanvasElement;
+  @query('sfx-crop-toolbar') private toolbarHost?: SfxCropToolbarElement;
+  @query('.ci-crop-zoom-slider-mount') private zoomMount?: HTMLDivElement;
+  @query('.ci-crop-container') private containerEl!: HTMLDivElement;
+
+  // === Runtime references ===
+  private controller: CropController | null = null;
+  private zoomSlider: ZoomSliderHandle | null = null;
 
   // === Lifecycle ===
 
   firstUpdated(): void {
-    const config = this.buildConfig();
-    this.instance = new CICropView(this, config);
-    // `sfx-crop-ready` is fired from the CICropView `onReady` bridge once the
-    // image is loaded and the renderer is live — see buildConfig() below.
+    setupAria(this);
+
+    const canvas = this.canvasHost.canvasEl;
+    const config = mergeConfig(this.buildConfig());
+    this.controller = createCropController({
+      canvas,
+      host: this,
+      layoutContainer: this.containerEl,
+      config,
+      callbacks: {
+        onReady: () => this.dispatch('sfx-crop-ready', { element: this }),
+        onImageLoad: (image) => this.dispatch('sfx-crop-image-load', { image }),
+        onError: (error) => this.dispatch('sfx-crop-error', { error }),
+        onChange: (s) => this.dispatch('sfx-crop-change', s),
+        onCropChange: (c) => this.dispatch('sfx-crop-crop-change', c),
+        onRotationSync: (deg) => this.toolbarHost?.setRotationValue(deg),
+        onShapeSync: (shape) => this.toolbarHost?.setShapeValue(shape),
+        onScaleSync: (scale) => this.zoomSlider?.setValue(scale),
+        onLoadingChange: (loading, error) => {
+          this.loading = loading;
+          this.errorMessage = error;
+        },
+      },
+    });
+
+    // Zoom slider — legacy factory inside a dedicated mount. Ported to Lit in P3.
+    if (this.showZoomSlider && this.zoomMount) {
+      this.zoomSlider = createZoomSlider(
+        this.zoomMount,
+        this.minScale,
+        this.maxScale,
+        (scale) => this.controller?.setScale(scale),
+      );
+    }
+
+    if (this.src) this.controller.loadImage(this.src);
   }
 
   updated(changed: PropertyValues): void {
-    if (!this.instance) return;
+    if (!this.controller) return;
     const delta: Partial<CICropViewConfig> = {};
-    let hasDelta = false;
+    let has = false;
 
-    const forward = <K extends keyof CICropViewConfig>(propKey: keyof SfxCropElement, cfgKey: K, value: CICropViewConfig[K]): void => {
-      if (changed.has(propKey as PropertyKey)) {
-        delta[cfgKey] = value;
-        hasDelta = true;
+    const forward = <K extends keyof CICropViewConfig>(prop: keyof SfxCropElement, key: K, value: CICropViewConfig[K]): void => {
+      if (changed.has(prop as PropertyKey)) {
+        delta[key] = value;
+        has = true;
       }
     };
 
@@ -119,7 +172,6 @@ export class SfxCropElement extends SfxCropBaseElement {
     forward('theme', 'theme', this.theme);
     forward('minScale', 'minScale', this.minScale);
     forward('maxScale', 'maxScale', this.maxScale);
-    forward('showToolbar', 'showToolbar', this.showToolbar);
     forward('borderRadius', 'borderRadius', this.borderRadius);
     forward('showBleedMargin', 'showBleedMargin', this.showBleedMargin);
     forward('bleedMarginSize', 'bleedMarginSize', this.bleedMarginSize);
@@ -130,73 +182,89 @@ export class SfxCropElement extends SfxCropBaseElement {
     forward('pinchZoom', 'pinchZoom', this.pinchZoom);
     forward('wheelZoom', 'wheelZoom', this.wheelZoom);
 
-    if (hasDelta) this.instance.update(delta);
+    if (has) this.controller.update(delta);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.instance?.destroy();
-    this.instance = null;
+    this.zoomSlider?.destroy();
+    this.zoomSlider = null;
+    this.controller?.destroy();
+    this.controller = null;
   }
 
   render(): unknown {
-    // In P1 the `CICropView` writes into the host directly, so the Lit template
-    // stays empty. P2 will replace this with shadow-DOM shape.
-    return html``;
+    const containerClasses = {
+      'ci-crop-container': true,
+      'ci-crop-theme-light': this.theme === 'light',
+      'ci-crop-theme-dark': this.theme !== 'light',
+    };
+
+    return html`
+      <div class=${classMap(containerClasses)} part="container">
+        <sfx-crop-canvas part="canvas-host"></sfx-crop-canvas>
+        ${this.showToolbar ? html`
+          <sfx-crop-toolbar
+            part="toolbar"
+            .shape=${this.cropShape}
+            ?show-rotate-button=${this.showRotateButton}
+            ?show-flip-button=${this.showFlipButton}
+            ?show-rotate-slider=${this.showRotateSlider}
+            ?show-shape-selector=${this.showShapeSelector}
+            toolbar-position=${this.toolbarPosition}
+            .availableShapes=${this.availableShapes}
+            @sfx-crop-toolbar-command=${this.onToolbarCommand}
+          ></sfx-crop-toolbar>
+        ` : null}
+        ${this.showZoomSlider ? html`<div class="ci-crop-zoom-slider-mount" part="zoom"></div>` : null}
+        <div class=${classMap({ 'ci-crop-loading': true, 'ci-crop-loading--hidden': !this.loading })} part="loading">
+          <div class="ci-crop-loading-spinner"></div>
+          <div class="ci-crop-loading-text">Loading…</div>
+        </div>
+        <div class=${classMap({ 'ci-crop-error': true, 'ci-crop-error--visible': !!this.errorMessage })} part="error">
+          ${this.errorMessage ?? 'Failed to load image'}
+        </div>
+      </div>
+    `;
   }
 
-  // === Public imperative API (matches CICropViewInstance) ===
+  // === Toolbar command router ===
 
-  loadImage(src: string): Promise<void> {
-    return this.ensure().loadImage(src);
-  }
-  getTransformState(): TransformState {
-    return this.ensure().getTransformState();
-  }
+  private onToolbarCommand = (e: Event): void => {
+    if (!this.controller) return;
+    const detail = (e as CustomEvent<SfxCropToolbarCommand>).detail;
+    switch (detail.type) {
+      case 'rotate-left': this.controller.rotateLeft(); break;
+      case 'flip-h': this.controller.flipHorizontal(); break;
+      case 'rotation': this.controller.setRotation(detail.value); break;
+      case 'shape':
+        this.cropShape = detail.value;
+        this.controller.setCropShape(detail.value);
+        break;
+    }
+  };
+
+  // === Public imperative API ===
+
+  loadImage(src: string): Promise<void> { return this.ensure().loadImage(src); }
+  getTransformState(): TransformState { return this.ensure().getTransformState(); }
   setCropShape(shape: CropShapeName): void {
+    this.cropShape = shape;
     this.ensure().setCropShape(shape);
   }
-  setCropRect(rect: CropRect): void {
-    this.ensure().setCropRect(rect);
-  }
-  getCropRect(): CropRect {
-    return this.ensure().getCropRect();
-  }
-  rotateLeft(): void {
-    this.ensure().rotateLeft();
-  }
-  flipHorizontal(): void {
-    this.ensure().flipHorizontal();
-  }
-  flipVertical(): void {
-    this.ensure().flipVertical();
-  }
-  setRotation(degrees: number): void {
-    this.ensure().setRotation(degrees);
-  }
-  setScale(scale: number): void {
-    this.ensure().setScale(scale);
-  }
-  reset(): void {
-    this.ensure().reset();
-  }
-  toCanvas(): HTMLCanvasElement {
-    return this.ensure().toCanvas();
-  }
-  toBlob(type?: string, quality?: number): Promise<Blob> {
-    return this.ensure().toBlob(type, quality);
-  }
-  toDataURL(type?: string, quality?: number): string {
-    return this.ensure().toDataURL(type, quality);
-  }
-  toTransformParams(): TransformParams {
-    return this.ensure().toTransformParams();
-  }
+  setCropRect(rect: CropRect): void { this.ensure().setCropRect(rect); }
+  getCropRect(): CropRect { return this.ensure().getCropRect(); }
+  rotateLeft(): void { this.ensure().rotateLeft(); }
+  flipHorizontal(): void { this.ensure().flipHorizontal(); }
+  flipVertical(): void { this.ensure().flipVertical(); }
+  setRotation(deg: number): void { this.ensure().setRotation(deg); }
+  setScale(scale: number): void { this.ensure().setScale(scale); }
+  reset(): void { this.ensure().reset(); }
+  toCanvas(): HTMLCanvasElement { return this.ensure().toCanvas(); }
+  toBlob(type?: string, quality?: number): Promise<Blob> { return this.ensure().toBlob(type, quality); }
+  toDataURL(type?: string, quality?: number): string { return this.ensure().toDataURL(type, quality); }
+  toTransformParams(): TransformParams { return this.ensure().toTransformParams(); }
 
-  /**
-   * Emit `sfx-crop-save` carrying the current blob/dataURL/transform params.
-   * UI cancel/save buttons will come in 2.1 — this is the imperative path for now.
-   */
   async save(type?: string, quality?: number): Promise<void> {
     const blob = await this.toBlob(type, quality);
     const dataURL = this.toDataURL(type, quality);
@@ -210,19 +278,13 @@ export class SfxCropElement extends SfxCropBaseElement {
 
   // === Internals ===
 
-  private ensure(): CICropViewInstance {
-    if (!this.instance) {
-      throw new Error('<sfx-crop> has not been connected yet — wait for "sfx-crop-ready" or firstUpdated().');
-    }
-    return this.instance;
+  private ensure(): CropController {
+    if (!this.controller) throw new Error('<sfx-crop> not connected — wait for "sfx-crop-ready" or firstUpdated().');
+    return this.controller;
   }
 
   private dispatch(type: string, detail: unknown): void {
-    this.dispatchEvent(new CustomEvent(type, {
-      detail,
-      bubbles: true,
-      composed: true,
-    }));
+    this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
   }
 
   private parseShowGrid(): boolean | 'interaction' {
@@ -244,11 +306,7 @@ export class SfxCropElement extends SfxCropBaseElement {
     const v = this.initialCrop;
     if (!v) return null;
     if (typeof v === 'object') return v;
-    try {
-      return JSON.parse(v) as CropRect;
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(v) as CropRect; } catch { return null; }
   }
 
   private buildConfig(): Partial<CICropViewConfig> {
@@ -288,17 +346,9 @@ export class SfxCropElement extends SfxCropBaseElement {
       keyboard: this.keyboard,
       pinchZoom: this.pinchZoom,
       wheelZoom: this.wheelZoom,
-      onReady: (instance) => this.dispatch('sfx-crop-ready', { element: this, instance }),
-      onChange: (state) => this.dispatch('sfx-crop-change', state),
-      onCropChange: (crop) => this.dispatch('sfx-crop-crop-change', crop),
-      onImageLoad: (image) => this.dispatch('sfx-crop-image-load', { image }),
-      onError: (error) => this.dispatch('sfx-crop-error', { error }),
     };
   }
 }
-
-// Static prop list used by the React wrapper in P4; kept here to avoid drift.
-export const SFX_CROP_BOOL_PROPS: readonly string[] = BOOL_PROPS;
 
 declare global {
   interface HTMLElementTagNameMap {
