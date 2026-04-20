@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist/react",
+    "declarationDir": "dist/react"
+  },
+  "include": [
+    "src/react/**/*",
+    "src/core/types.ts",
+    "src/elements/sfx-crop.ts",
+    "src/vite-env.d.ts"
+  ],
+  "exclude": ["node_modules", "dist", "dist-demo", "tests", "demo"]
+}

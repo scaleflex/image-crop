@@ -1,3 +1,4 @@
+/// <reference path="../vite-env.d.ts" />
 import { html, css, unsafeCSS, type PropertyValues } from 'lit';
 import { property, state, query } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';

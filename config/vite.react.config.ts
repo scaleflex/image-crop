@@ -3,23 +3,33 @@ import { resolve } from 'path';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 
+/**
+ * React wrapper bundle — thin layer on top of the main `<sfx-crop>` element.
+ *
+ * Produces:
+ *   dist/react/index.js    (ESM)
+ *   dist/react/index.cjs   (CJS)
+ *   dist/react/index.d.ts  (types, scoped via tsconfig.react.json)
+ *
+ * `react`, `react-dom`, `react/jsx-runtime`, `lit`, and the main package
+ * itself are all external so consumers dedupe them.
+ */
 export default defineConfig({
   plugins: [
     react(),
     dts({
-      include: ['src/react/**/*.ts', 'src/react/**/*.tsx', 'src/core/types.ts'],
-      tsconfigPath: resolve(__dirname, '../tsconfig.build.json'),
-      outDir: resolve(__dirname, '../dist'),
+      include: ['src/react/**/*.ts', 'src/react/**/*.tsx'],
+      tsconfigPath: resolve(__dirname, '../tsconfig.react.json'),
+      outDir: resolve(__dirname, '../dist/react'),
+      entryRoot: resolve(__dirname, '../src/react'),
+      rollupTypes: false,
     }),
   ],
   build: {
     lib: {
       entry: resolve(__dirname, '../src/react/index.ts'),
       formats: ['es', 'cjs'],
-      fileName: (format) => {
-        if (format === 'es') return 'index.js';
-        return 'index.cjs';
-      },
+      fileName: (format) => (format === 'es' ? 'index.js' : 'index.cjs'),
     },
     rollupOptions: {
       external: [
