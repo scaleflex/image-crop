@@ -302,13 +302,17 @@ export function createRenderer(
     animate();
 
     if (!dirty) return;
-    dirty = false;
 
     const container = canvas.parentElement;
     if (!container) return;
 
     const cw = container.clientWidth;
     const ch = container.clientHeight;
+    // Skip drawing until layout produces a sized container — the
+    // ResizeObserver will markDirty() once it has dimensions. Don't clear
+    // the dirty flag yet, or the next frame will leave the canvas blank.
+    if (cw === 0 || ch === 0) return;
+    dirty = false;
 
     // 1. Clear
     ctx.clearRect(0, 0, cw, ch);
