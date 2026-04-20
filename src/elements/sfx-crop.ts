@@ -118,8 +118,14 @@ export class SfxCropElement extends SfxCropBaseElement {
 
   // === Lifecycle ===
 
-  firstUpdated(): void {
+  async firstUpdated(): Promise<void> {
     setupAria(this);
+
+    // <sfx-crop-canvas> is a child custom element; its template (the <canvas>)
+    // only materializes after its own first update cycle. Awaiting the child's
+    // updateComplete guarantees `canvasEl` is non-null before we hand it to
+    // the controller (renderer.getContext would throw otherwise).
+    await this.canvasHost.updateComplete;
 
     const canvas = this.canvasHost.canvasEl;
     const config = mergeConfig(this.buildConfig());
