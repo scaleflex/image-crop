@@ -1,18 +1,20 @@
 {
-  "name": "js-cloudimage-crop",
-  "version": "1.0.0",
-  "description": "Interactive image crop tool with rotation, flip, zoom and shape selection",
+  "name": "@scaleflex/crop",
+  "version": "2.0.0-alpha.0",
+  "description": "Interactive image crop tool with rotation, flip, zoom and shape selection — Scaleflex Web Component",
   "license": "MIT",
   "author": "Scaleflex",
-  "main": "dist/js-cloudimage-crop.cjs.js",
-  "module": "dist/js-cloudimage-crop.esm.js",
-  "unpkg": "dist/js-cloudimage-crop.min.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/js-cloudimage-crop.esm.js",
-      "require": "./dist/js-cloudimage-crop.cjs.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./define": {
+      "types": "./dist/define.d.ts",
+      "import": "./dist/define.js",
+      "require": "./dist/define.cjs"
     },
     "./react": {
       "types": "./dist/react/index.d.ts",
@@ -23,7 +25,11 @@
   "files": [
     "dist"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "dist/define.js",
+    "dist/define.cjs",
+    "src/define.ts"
+  ],
   "scripts": {
     "dev": "vite --config config/vite.demo.config.ts",
     "build": "npm run build:bundle && npm run build:react",
@@ -37,9 +43,12 @@
     "lint": "eslint src/ tests/ --ext .ts,.tsx",
     "prepublishOnly": "npm run build"
   },
+  "dependencies": {
+    "lit": "^3.2.0"
+  },
   "peerDependencies": {
-    "react": ">=17.0.0",
-    "react-dom": ">=17.0.0"
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -77,6 +86,8 @@
     "zoom",
     "cloudimage",
     "scaleflex",
+    "web-component",
+    "lit",
     "react"
   ],
   "repository": {

@@ -2,38 +2,54 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 
+/**
+ * Main library bundle — produces:
+ *   dist/index.js        (ESM, tree-shakeable, no side-effects)
+ *   dist/index.cjs       (CJS)
+ *   dist/index.d.ts      (types)
+ *   dist/define.js       (ESM, side-effect: registers custom elements)
+ *   dist/define.cjs      (CJS)
+ *   dist/define.d.ts     (types)
+ *
+ * Scaleflex convention (matches @scaleflex/asset-picker, @scaleflex/uploader):
+ *   - ESM + CJS, no UMD
+ *   - `lit` kept external so consumers dedupe across packages
+ *   - two entries: `.` pure, `./define` side-effectful
+ */
 export default defineConfig({
   plugins: [
     dts({
       include: ['src/**/*.ts'],
       exclude: ['src/react/**/*', 'tests/**/*'],
-      rollupTypes: true,
+      rollupTypes: false,
       tsconfigPath: resolve(__dirname, '../tsconfig.build.json'),
     }),
   ],
   build: {
     lib: {
-      entry: resolve(__dirname, '../src/index.ts'),
+      entry: {
+        index: resolve(__dirname, '../src/index.ts'),
+        define: resolve(__dirname, '../src/define.ts'),
+      },
+      formats: ['es', 'cjs'],
     },
     rollupOptions: {
+      external: [
+        'lit',
+        'lit/decorators.js',
+        /^lit\//,
+      ],
       output: [
         {
           format: 'es',
-          entryFileNames: 'js-cloudimage-crop.esm.js',
-          chunkFileNames: 'chunks/[name].js',
+          entryFileNames: '[name].js',
+          chunkFileNames: 'chunks/[name]-[hash].js',
           exports: 'named',
         },
         {
           format: 'cjs',
-          entryFileNames: 'js-cloudimage-crop.cjs.js',
-          inlineDynamicImports: true,
-          exports: 'named',
-        },
-        {
-          format: 'umd',
-          entryFileNames: 'js-cloudimage-crop.min.js',
-          inlineDynamicImports: true,
-          name: 'CICropView',
+          entryFileNames: '[name].cjs',
+          chunkFileNames: 'chunks/[name]-[hash].cjs',
           exports: 'named',
         },
       ],
