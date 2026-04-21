@@ -1,31 +1,29 @@
-import { html, css } from 'lit';
+import { html } from 'lit';
 import { query } from 'lit/decorators.js';
 import { SfxCropBaseElement } from './base';
+import { sfxCropCanvasStyles } from './sfx-crop-canvas.styles';
 
 /**
  * `<sfx-crop-canvas>` — minimal host for the editor's `<canvas>`.
  *
- * Uses light DOM so the parent `<sfx-crop>`'s shadow-scoped stylesheet (which
- * carries the `--sfx-cr-*` tokens and the legacy `.ci-crop-canvas` rules)
- * applies here transparently. The `<canvas>` is rendered once and never
- * re-created, so `setPointerCapture`, non-passive `wheel` listeners, and
- * the ResizeObserver bound by the controller stay stable across Lit updates.
+ * Owns its own shadow root so the canvas styling + `touch-action: none` live
+ * encapsulated alongside the `<canvas>` node. The parent `<sfx-crop>`'s host-
+ * level `--sfx-cr-*` tokens cascade in via CSS custom-property inheritance.
  *
- * Theme a consumer via `::part(canvas)` from light DOM.
+ * The `<canvas>` is rendered once and never re-created, so `setPointerCapture`,
+ * non-passive `wheel` listeners, and the ResizeObserver bound by the
+ * controller stay stable across Lit updates.
+ *
+ * Theme a consumer via `::part(canvas)` from the parent host.
  */
 export class SfxCropCanvasElement extends SfxCropBaseElement {
-  /** Light DOM — see class docs. */
-  protected createRenderRoot(): HTMLElement {
-    return this;
-  }
-
-  static styles = css``;
+  static styles = [sfxCropCanvasStyles];
 
   @query('canvas')
   canvasEl!: HTMLCanvasElement;
 
   render(): unknown {
-    return html`<canvas class="ci-crop-canvas" part="canvas"></canvas>`;
+    return html`<canvas part="canvas"></canvas>`;
   }
 }
 

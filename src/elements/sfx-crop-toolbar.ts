@@ -1,4 +1,4 @@
-import { html, css } from 'lit';
+import { html } from 'lit';
 import { property, query } from 'lit/decorators.js';
 import { SfxCropBaseElement } from './base';
 import type { CropShapeName } from '../core/types';
@@ -8,6 +8,8 @@ import './sfx-crop-shapes';
 import type { SfxCropRotateElement } from './sfx-crop-rotate';
 import type { SfxCropShapesElement } from './sfx-crop-shapes';
 import { parseAvailableShapes, DEFAULT_SHAPES } from './parse-shapes';
+import { baseStyles, toolbarEnterKeyframes } from '../styles/shared.css';
+import { sfxCropToolbarStyles } from './sfx-crop-toolbar.styles';
 
 /**
  * Unified descriptor dispatched on `sfx-crop-toolbar-command` so the host
@@ -21,18 +23,11 @@ export type SfxCropToolbarCommand =
 
 /**
  * `<sfx-crop-toolbar>` — composes rotate/flip buttons + `<sfx-crop-rotate>` +
- * `<sfx-crop-shapes>` into the editor's action bar. Fully Lit-native; the
- * legacy imperative `createToolbar` factory is no longer called.
- *
- * Light DOM so the parent `<sfx-crop>`'s shadow stylesheet (carrying the
- * `.ci-crop-toolbar*` rules) applies without duplication.
+ * `<sfx-crop-shapes>` into the editor's action bar. Fully Lit-native with its
+ * own shadow DOM; tokens inherit from the parent `<sfx-crop>`.
  */
 export class SfxCropToolbarElement extends SfxCropBaseElement {
-  protected createRenderRoot(): HTMLElement {
-    return this;
-  }
-
-  static styles = css``;
+  static styles = [baseStyles, toolbarEnterKeyframes, sfxCropToolbarStyles];
 
   @property({ type: String }) shape: CropShapeName = 'free';
   @property({ type: Number }) rotation = 0;
@@ -40,7 +35,8 @@ export class SfxCropToolbarElement extends SfxCropBaseElement {
   @property({ type: Boolean, attribute: 'show-flip-button' }) showFlipButton = true;
   @property({ type: Boolean, attribute: 'show-rotate-slider' }) showRotateSlider = true;
   @property({ type: Boolean, attribute: 'show-shape-selector' }) showShapeSelector = true;
-  @property({ type: String, attribute: 'toolbar-position' }) toolbarPosition: 'top' | 'bottom' = 'bottom';
+  @property({ type: String, attribute: 'toolbar-position', reflect: true })
+  toolbarPosition: 'top' | 'bottom' = 'bottom';
 
   /** JSON-serialized or CSV string on the attribute; `CropShapeName[]` via property. */
   @property({ attribute: 'available-shapes' })
@@ -51,17 +47,16 @@ export class SfxCropToolbarElement extends SfxCropBaseElement {
 
   render(): unknown {
     const hasLeftButtons = this.showRotateButton || this.showFlipButton;
-    const cls = `ci-crop-toolbar${this.toolbarPosition === 'top' ? ' ci-crop-toolbar--top' : ''}`;
     const shapes = parseAvailableShapes(this.availableShapes) ?? [...DEFAULT_SHAPES];
 
     return html`
-      <div class=${cls}>
+      <div class="sfx-cr-toolbar">
         ${hasLeftButtons ? html`
-          <div class="ci-crop-toolbar-group">
+          <div class="sfx-cr-toolbar-group">
             ${this.showRotateButton ? html`
               <button
                 type="button"
-                class="ci-crop-toolbar-btn"
+                class="sfx-cr-toolbar-btn"
                 aria-label="Rotate left 90°"
                 .innerHTML=${ICON_ROTATE_LEFT}
                 @click=${() => this.emit({ type: 'rotate-left' })}
@@ -70,7 +65,7 @@ export class SfxCropToolbarElement extends SfxCropBaseElement {
             ${this.showFlipButton ? html`
               <button
                 type="button"
-                class="ci-crop-toolbar-btn"
+                class="sfx-cr-toolbar-btn"
                 aria-label="Flip horizontal"
                 .innerHTML=${ICON_FLIP_H}
                 @click=${() => this.emit({ type: 'flip-h' })}
@@ -79,7 +74,7 @@ export class SfxCropToolbarElement extends SfxCropBaseElement {
           </div>
         ` : null}
 
-        ${hasLeftButtons && this.showRotateSlider ? html`<div class="ci-crop-toolbar-separator"></div>` : null}
+        ${hasLeftButtons && this.showRotateSlider ? html`<div class="sfx-cr-toolbar-separator"></div>` : null}
 
         ${this.showRotateSlider ? html`
           <sfx-crop-rotate
@@ -89,7 +84,7 @@ export class SfxCropToolbarElement extends SfxCropBaseElement {
           ></sfx-crop-rotate>
         ` : null}
 
-        ${this.showRotateSlider && this.showShapeSelector ? html`<div class="ci-crop-toolbar-separator"></div>` : null}
+        ${this.showRotateSlider && this.showShapeSelector ? html`<div class="sfx-cr-toolbar-separator"></div>` : null}
 
         ${this.showShapeSelector ? html`
           <sfx-crop-shapes

@@ -1,5 +1,4 @@
-/// <reference path="../vite-env.d.ts" />
-import { html, css, unsafeCSS, type PropertyValues } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { property, state, query } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { createCropController, type CropController } from '../core/crop-controller';
@@ -18,12 +17,8 @@ import type { SfxCropZoomElement } from './sfx-crop-zoom';
 import './sfx-crop-zoom';
 import { SfxCropBaseElement } from './base';
 import { parseAvailableShapes, DEFAULT_SHAPES } from './parse-shapes';
-// Shared stylesheet — tokens live on :host with --sfx-cr-* prefix, so
-// consumers can theme from light DOM. Per-element `static styles` split is
-// on the roadmap; for 2.0.0 the full sheet is injected once via unsafeCSS.
-// INVARIANT: the sheet MUST NOT contain user-supplied content — unsafeCSS
-// bypasses CSS escaping. Current source is a static asset we own.
-import CSS_STRING from '../styles/index.css?inline';
+import { designTokens, baseStyles, spinKeyframes } from '../styles/shared.css';
+import { sfxCropStyles } from './sfx-crop.styles';
 
 /**
  * Lit `@property` converter for the tri-state `show-grid` attribute, which
@@ -64,18 +59,7 @@ const SHOW_GRID_CONVERTER = {
  * `::part(canvas-host|toolbar|zoom|loading|error|container)` from light DOM.
  */
 export class SfxCropElement extends SfxCropBaseElement {
-  static styles = [
-    css`
-      :host {
-        display: block;
-        position: relative;
-        width: 100%;
-        height: 100%;
-      }
-      :host([hidden]) { display: none; }
-    `,
-    unsafeCSS(CSS_STRING),
-  ];
+  static styles = [designTokens, baseStyles, spinKeyframes, sfxCropStyles];
 
   // === Attributes mirroring SfxCropConfig ===
 
@@ -132,7 +116,7 @@ export class SfxCropElement extends SfxCropBaseElement {
   @query('sfx-crop-canvas') private canvasHost!: SfxCropCanvasElement;
   @query('sfx-crop-toolbar') private toolbarHost?: SfxCropToolbarElement;
   @query('sfx-crop-zoom') private zoomHost?: SfxCropZoomElement;
-  @query('.ci-crop-container') private containerEl!: HTMLDivElement;
+  @query('.sfx-cr-container') private containerEl!: HTMLDivElement;
 
   // === Runtime references ===
   private controller: CropController | null = null;
@@ -157,10 +141,9 @@ export class SfxCropElement extends SfxCropBaseElement {
     // the controller.
     await this.canvasHost.updateComplete;
 
-    // If the host was removed from the DOM during the microtask window (fast
-    // mount/unmount, e.g. React StrictMode or router transitions),
-    // disconnectedCallback already ran with a null controller — don't leak one
-    // by creating it now.
+    // Fast mount/unmount (React StrictMode, router transitions) could have
+    // removed us during the microtask gap — don't leak a controller for a
+    // detached host.
     if (!this.isConnected) return;
 
     const canvas = this.canvasHost.canvasEl;
@@ -196,9 +179,6 @@ export class SfxCropElement extends SfxCropBaseElement {
     let has = false;
     for (const key of LIVE_CONFIG_KEYS) {
       if (changed.has(key)) {
-        // Keys are shared between SfxCropElement and SfxCropConfig by design;
-        // the cast removes the structural-vs-nominal friction without losing
-        // correctness (LIVE_CONFIG_KEYS is typed against both).
         (delta as Record<string, unknown>)[key] = this[key];
         has = true;
       }
@@ -213,14 +193,8 @@ export class SfxCropElement extends SfxCropBaseElement {
   }
 
   render(): unknown {
-    const containerClasses = {
-      'ci-crop-container': true,
-      'ci-crop-theme-light': this.theme === 'light',
-      'ci-crop-theme-dark': this.theme !== 'light',
-    };
-
     return html`
-      <div class=${classMap(containerClasses)} part="container">
+      <div class="sfx-cr-container" part="container">
         <sfx-crop-canvas part="canvas-host"></sfx-crop-canvas>
         ${this.showToolbar ? html`
           <sfx-crop-toolbar
@@ -243,11 +217,11 @@ export class SfxCropElement extends SfxCropBaseElement {
             @sfx-crop-zoom-change=${(e: CustomEvent<{ scale: number }>) => this.controller?.setScale(e.detail.scale)}
           ></sfx-crop-zoom>
         ` : null}
-        <div class=${classMap({ 'ci-crop-loading': true, 'ci-crop-loading--hidden': !this.loading })} part="loading">
-          <div class="ci-crop-loading-spinner"></div>
-          <div class="ci-crop-loading-text">Loading…</div>
+        <div class=${classMap({ 'sfx-cr-loading': true, 'sfx-cr-loading--hidden': !this.loading })} part="loading">
+          <div class="sfx-cr-loading-spinner"></div>
+          <div class="sfx-cr-loading-text">Loading…</div>
         </div>
-        <div class=${classMap({ 'ci-crop-error': true, 'ci-crop-error--visible': !!this.errorMessage })} part="error">
+        <div class=${classMap({ 'sfx-cr-error': true, 'sfx-cr-error--visible': !!this.errorMessage })} part="error">
           ${this.errorMessage ?? 'Failed to load image'}
         </div>
       </div>
@@ -264,10 +238,7 @@ export class SfxCropElement extends SfxCropBaseElement {
       case 'flip-h': this.controller.flipHorizontal(); break;
       case 'rotation': this.controller.setRotation(detail.value); break;
       case 'shape':
-        // Assign the property only — `updated()` forwards the delta to
-        // `controller.update({ cropShape })`, which in turn calls
-        // `setCropShape`. No explicit `controller.setCropShape(...)` here,
-        // or the change/cropChange events fire twice per click.
+        // Property assignment only — `updated()` forwards to controller.
         this.cropShape = detail.value;
         break;
     }
@@ -277,14 +248,8 @@ export class SfxCropElement extends SfxCropBaseElement {
 
   loadImage(src: string): Promise<void> { return this.ensure().loadImage(src); }
   getTransformState(): TransformState { return this.ensure().getTransformState(); }
-  /**
-   * Sets the crop shape. Internally assigns `this.cropShape`, which Lit
-   * reflects through `updated()` into `controller.update({ cropShape })`.
-   * Exposed as an imperative method purely for ergonomic parity with
-   * `rotateLeft()`, `setScale()`, etc.
-   */
   setCropShape(shape: CropShapeName): void {
-    this.ensure(); // assert controller exists; throws with helpful message otherwise
+    this.ensure();
     this.cropShape = shape;
   }
   setCropRect(rect: CropRect): void { this.ensure().setCropRect(rect); }
@@ -374,10 +339,6 @@ export class SfxCropElement extends SfxCropBaseElement {
  * Element properties whose runtime mutations the controller cares about. The
  * intersection typing ensures the key is spelled identically on both sides —
  * a misspelling fails the build.
- *
- * Init-only keys (`initialRotation`, `initialScale`, `initialCrop`) and
- * template-driven keys (`showToolbar`, `availableShapes`, …) are intentionally
- * excluded — Lit's diff already re-renders the shadow DOM when they change.
  */
 const LIVE_CONFIG_KEYS = [
   'src', 'cropShape', 'theme',

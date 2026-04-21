@@ -1,4 +1,4 @@
-import { html, css, type PropertyValues } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { SfxCropBaseElement } from './base';
 import type { CropShapeName } from '../core/types';
@@ -11,6 +11,8 @@ import {
   ICON_CROP_PORTRAIT,
   ICON_CHEVRON_DOWN,
 } from './icons';
+import { baseStyles } from '../styles/shared.css';
+import { sfxCropShapesStyles } from './sfx-crop-shapes.styles';
 
 interface ShapeOption {
   value: CropShapeName;
@@ -33,7 +35,8 @@ const ALL_SHAPES: ShapeOption[] = [
 
 /**
  * `<sfx-crop-shapes>` — trigger + dropdown with aspect-ratio / shape presets.
- * Light DOM for stylesheet inheritance from the parent `<sfx-crop>`.
+ * Shadow DOM for style encapsulation; parent's `--sfx-cr-*` tokens reach here
+ * via CSS custom-property inheritance.
  *
  * Keyboard: Enter/Space toggles the dropdown; Arrow keys navigate options;
  * Enter/Space commits; Escape closes.
@@ -43,11 +46,7 @@ const ALL_SHAPES: ShapeOption[] = [
  *   bubbles + composed.
  */
 export class SfxCropShapesElement extends SfxCropBaseElement {
-  protected createRenderRoot(): HTMLElement {
-    return this;
-  }
-
-  static styles = css``;
+  static styles = [baseStyles, sfxCropShapesStyles];
 
   @property({ type: String }) value: CropShapeName = 'free';
 
@@ -55,7 +54,8 @@ export class SfxCropShapesElement extends SfxCropBaseElement {
   @property({ attribute: false })
   shapes: CropShapeName[] = ALL_SHAPES.map((s) => s.value);
 
-  @state() private open = false;
+  @property({ type: Boolean, reflect: true }) open = false;
+
   @state() private focusedIndex = -1;
   private focusRafId: number | null = null;
 
@@ -65,7 +65,6 @@ export class SfxCropShapesElement extends SfxCropBaseElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    // Closes when anything outside the shadow tree is clicked.
     document.addEventListener('click', this.docClickHandler);
   }
 
@@ -80,8 +79,6 @@ export class SfxCropShapesElement extends SfxCropBaseElement {
 
   updated(changed: PropertyValues): void {
     if (changed.has('open') && this.open) {
-      // Focus current selection after paint. Cancellable so a quick close →
-      // disconnect doesn't call focusOption() on a detached node.
       this.focusRafId = requestAnimationFrame(() => {
         this.focusRafId = null;
         const idx = this.focusedIndex >= 0 ? this.focusedIndex : 0;
@@ -96,35 +93,34 @@ export class SfxCropShapesElement extends SfxCropBaseElement {
 
     return html`
       <div
-        class=${`ci-crop-shape-selector${this.open ? ' ci-crop-shape-selector--open' : ''}`}
         @keydown=${this.onKeyDown}
         @click=${(e: Event) => e.stopPropagation()}
       >
         <button
           type="button"
-          class="ci-crop-shape-trigger"
+          class="sfx-cr-shape-trigger"
           aria-label="Select crop shape"
           aria-haspopup="listbox"
           aria-expanded=${this.open ? 'true' : 'false'}
           @click=${this.onTriggerClick}
         >
-          <span class="ci-crop-shape-trigger-icon" .innerHTML=${current?.icon ?? ''}></span>
-          <span class="ci-crop-shape-trigger-label">${current?.label ?? ''}</span>
-          <span class="ci-crop-shape-chevron" .innerHTML=${ICON_CHEVRON_DOWN}></span>
+          <span class="sfx-cr-shape-trigger-icon" .innerHTML=${current?.icon ?? ''}></span>
+          <span class="sfx-cr-shape-trigger-label">${current?.label ?? ''}</span>
+          <span class="sfx-cr-shape-chevron" .innerHTML=${ICON_CHEVRON_DOWN}></span>
         </button>
-        <div class="ci-crop-shape-dropdown" role="listbox">
+        <div class="sfx-cr-shape-dropdown" role="listbox">
           ${visible.map((opt, i) => html`
             <button
               type="button"
-              class=${`ci-crop-shape-option${opt.value === this.value ? ' ci-crop-shape-option--active' : ''}`}
+              class=${`sfx-cr-shape-option${opt.value === this.value ? ' sfx-cr-shape-option--active' : ''}`}
               role="option"
               aria-selected=${opt.value === this.value ? 'true' : 'false'}
               style=${`transition-delay:${i * 20}ms`}
               @click=${(e: Event) => this.onOptionClick(e, opt.value)}
               data-index=${String(i)}
             >
-              <span class="ci-crop-shape-option-icon" .innerHTML=${opt.icon}></span>
-              <span class="ci-crop-shape-option-label">${opt.label}</span>
+              <span class="sfx-cr-shape-option-icon" .innerHTML=${opt.icon}></span>
+              <span class="sfx-cr-shape-option-label">${opt.label}</span>
             </button>
           `)}
         </div>
@@ -205,7 +201,10 @@ export class SfxCropShapesElement extends SfxCropBaseElement {
 
   private focusOption(index: number): void {
     this.focusedIndex = index;
-    const opt = this.querySelector<HTMLElement>(`.ci-crop-shape-option[data-index="${index}"]`);
+    // Scoped to our shadow root now that we use shadow DOM.
+    const opt = this.renderRoot.querySelector<HTMLElement>(
+      `.sfx-cr-shape-option[data-index="${index}"]`,
+    );
     opt?.focus();
   }
 }

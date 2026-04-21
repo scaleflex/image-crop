@@ -17,9 +17,6 @@ export type CropShapeName = 'free' | 'square' | 'circle' | 'rounded-rect' | '16:
 /** @deprecated Use CropShapeName instead */
 export type CropShape = CropShapeName;
 
-/** @deprecated Renamed to `SfxCropConfig` in 2.0.0. */
-export type CICropViewConfig = SfxCropConfig;
-
 export interface CropShapeConfig {
   type: 'free' | 'rect' | 'circle' | 'rounded-rect';
   ratio?: number; // width/height ratio for 'rect' type
@@ -235,5 +232,5 @@ export type CropResult = TransformParams;
 // === Instance ===
 //
 // The public imperative instance is the `<sfx-crop>` element itself — see
-// `SfxCropElement` in `src/elements/sfx-crop.ts`. The former `CICropViewInstance`
-// interface was removed in 2.0.0 because consumers now hold an element ref.
+// `SfxCropElement` in `src/elements/sfx-crop.ts`. No separate interface is
+// needed because consumers hold an element ref.

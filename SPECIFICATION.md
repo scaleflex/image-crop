@@ -27,18 +27,23 @@ Inspired by Pintura's crop interface style. Part of the Scaleflex js-cloudimage-
 
 ### 1.1 Purpose
 
-A framework-agnostic JavaScript library for interactive image cropping. Provides a
-canvas-based crop interface with rotation, flip, zoom, and aspect ratio constraints.
+Framework-agnostic interactive image-cropping library delivered as a Lit 3
+Web Component (`<sfx-crop>`) with a thin React wrapper. Canvas-based editor
+with rotation, flip, zoom, and aspect-ratio shape presets. Public API and
+packaging mirror the sibling Scaleflex packages `@scaleflex/uploader` and
+`@scaleflex/asset-picker`.
 
 ### 1.2 Goals
 
 - Premium, Pintura-inspired visual experience with luxury animations
-- Zero runtime dependencies (Canvas 2D API only)
-- Framework-agnostic core with optional React wrapper
-- Lightweight bundle (~15-25KB gzipped)
+- Web-component first: `<sfx-crop>` works in any framework, no SDK required
+- Single runtime dep (`lit@^3`); Canvas 2D for rendering
+- Scaleflex-convention packaging: `.` / `./define` / `./react` exports,
+  ESM + CJS, no UMD
 - Touch, mouse, keyboard, and stylus support
 - WCAG 2.1 AA accessible
 - TypeScript-first with full type safety
+- `--sfx-cr-*` CSS custom properties + `::part(...)` for consumer theming
 
 ### 1.3 Tools
 
@@ -499,7 +504,7 @@ When `prefers-reduced-motion: reduce` is active:
 
 | Pattern | Implementation |
 |---------|---------------|
-| Instance Registry | Static `Map<HTMLElement, CICropView>` prevents duplicates |
+| Custom-element registration | `./define` side-effect entry; `safeDefine` guards against double-registration |
 | Factory Functions | `createElement()`, `createToolbar()` for DOM creation |
 | CSS Ref-Counting | `injectStyles()` / `removeStyles()` — inject once, cleanup on last destroy |
 | Config Merging | `DEFAULT_CONFIG` + deep merge + validate + data-attribute parsing |
@@ -514,7 +519,8 @@ When `prefers-reduced-motion: reduce` is active:
 User Action (click/drag/keyboard)
   → Interaction handler
   → Pure transform function → new TransformState
-  → CICropView stores new state
+  → crop-controller updates state, calls callbacks
+  → <sfx-crop> dispatches sfx-crop-change / sfx-crop-crop-change
   → renderer.markDirty()
   → Next rAF: render(image, animatedState)
   → Fire onChange callback
@@ -544,119 +550,152 @@ Conversion functions: `imageToCanvas()`, `canvasToImage()`, `normalizedToCanvas(
 
 ## 5. Public API
 
-### 5.1 Constructor
+### 5.1 Custom element
 
-```typescript
-const crop = new CICropView(element: HTMLElement | string, config?: Partial<CICropViewConfig>);
+```html
+<script type="module">
+  import '@scaleflex/crop/define';
+</script>
+
+<sfx-crop
+  src="/photos/landscape.jpg"
+  crop-shape="16:9"
+  theme="dark"
+  show-grid="interaction"
+></sfx-crop>
 ```
 
-- `element`: DOM element or CSS selector string
-- If an instance already exists on this element, it is destroyed first
+Registered tags (all six live in `./define`):
 
-### 5.2 Static Methods
+| Tag | Role |
+|---|---|
+| `<sfx-crop>` | main editor |
+| `<sfx-crop-canvas>` | stable `<canvas>` host inside the shadow root |
+| `<sfx-crop-toolbar>` | action bar composing rotate/flip buttons + sliders + shape selector |
+| `<sfx-crop-zoom>` | zoom slider |
+| `<sfx-crop-rotate>` | fine-rotation slider (-45°…+45°) with snap-to-zero |
+| `<sfx-crop-shapes>` | shape preset dropdown with keyboard nav |
 
-```typescript
-CICropView.autoInit(root?: HTMLElement): CICropView[];
+### 5.2 Attributes
+
+Every configuration value has a kebab-case attribute on `<sfx-crop>`. Notable:
+
+| Attribute | Type | Default |
+|---|---|---|
+| `src` | URL string | `""` |
+| `crop-shape` | `free \| square \| circle \| rounded-rect \| 16:9 \| 4:3 \| 3:2 \| 2:3 \| 3:4 \| 9:16` | `free` |
+| `theme` | `light \| dark` | `dark` |
+| `show-grid` | `true \| false \| interaction` | `interaction` |
+| `min-scale`, `max-scale` | number | `0.5`, `5` |
+| `min-crop-size` | px | `20` |
+| `available-shapes` | JSON array or CSV string | full preset list |
+| `show-toolbar`, `show-rotate-button`, `show-flip-button`, `show-rotate-slider`, `show-shape-selector`, `show-zoom-slider` | boolean | `true` |
+| `toolbar-position` | `top \| bottom` | `bottom` |
+| `border-radius` | px | `20` |
+| `overlay-color`, `handle-color`, `bleed-margin-color` | CSS color | — |
+| `show-bleed-margin`, `bleed-margin-size` | boolean, px | `false`, `10` |
+| `enable-animations`, `animation-speed` | boolean, number | `true`, `1.0` |
+| `keyboard`, `pinch-zoom`, `wheel-zoom` | boolean | `true` |
+
+### 5.3 Imperative methods (on the element)
+
+```ts
+interface SfxCropElement extends HTMLElement {
+  loadImage(src: string): Promise<void>;
+
+  rotateLeft(): void;                 // 90° CCW, animated
+  flipHorizontal(): void;
+  setRotation(deg: number): void;     // -45 … +45
+  setScale(scale: number): void;
+
+  setCropShape(shape: CropShapeName): void;
+  setCropRect(rect: CropRect): void;
+  getCropRect(): CropRect;
+  getTransformState(): TransformState;
+
+  toCanvas(): HTMLCanvasElement;
+  toBlob(type?: string, quality?: number): Promise<Blob>;
+  toDataURL(type?: string, quality?: number): string;
+  toTransformParams(): TransformParams;
+
+  reset(): void;
+  save(type?: string, quality?: number): Promise<void>;  // fires sfx-crop-save
+  cancel(): void;                                        // fires sfx-crop-cancel
+}
 ```
-Scans for `[data-ci-crop-src]` elements and creates instances.
 
-### 5.3 Instance Methods
+### 5.4 Events (all `bubbles: true, composed: true`)
 
-```typescript
-// Image
-loadImage(src: string): Promise<void>;
+| Event | `detail` |
+|---|---|
+| `sfx-crop-ready` | `{ element: SfxCropElement }` |
+| `sfx-crop-image-load` | `{ image: HTMLImageElement }` |
+| `sfx-crop-change` | `TransformState` |
+| `sfx-crop-crop-change` | `CropRect` (image-pixel coords) |
+| `sfx-crop-save` | `{ blob: Blob, dataURL: string, params: TransformParams }` |
+| `sfx-crop-cancel` | `void` |
+| `sfx-crop-error` | `{ error: Error }` |
 
-// Transforms
-rotateLeft(): void;                          // Rotate 90° CCW (animated)
-flipHorizontal(): void;                      // Flip H (animated)
-setRotation(degrees: number): void;          // Fine rotation (-45 to +45)
-setScale(scale: number): void;               // Set zoom level
-
-// Crop
-setCropShape(shape: string): void;           // 'free' | 'square' | 'circle' | '16:9' | etc.
-setCropRect(rect: CropRect): void;           // Programmatically set crop region
-getCropRect(): CropRect;                     // Get crop in original image coordinates
-getTransformState(): TransformState;         // Get full transform parameters
-
-// Export
-toCanvas(): HTMLCanvasElement;               // Export cropped image as canvas
-toBlob(type?: string, quality?: number): Promise<Blob>;
-toDataURL(type?: string, quality?: number): string;
-toTransformParams(): TransformParams;        // For server-side processing
-
-// Lifecycle
-reset(): void;                               // Reset all transforms to initial
-update(config: Partial<CICropViewConfig>): void;  // Update config dynamically
-destroy(): void;                             // Full cleanup
-```
-
-### 5.4 Events / Callbacks
-
-```typescript
-onChange?: (state: TransformState) => void;   // Any state change
-onCropChange?: (crop: CropRect) => void;      // Crop rect changed
-onImageLoad?: (image: HTMLImageElement) => void;
-onError?: (error: Error) => void;
-onReady?: (instance: CICropViewInstance) => void;
-```
+Internal sub-element events the host routes through `sfx-crop-toolbar-command`:
+`sfx-crop-rotate-change`, `sfx-crop-shape-change`, `sfx-crop-zoom-change`.
 
 ### 5.5 Types
 
-```typescript
+```ts
 interface CropRect {
-  x: number;       // Left edge (original image pixels)
-  y: number;       // Top edge (original image pixels)
-  width: number;   // Width (original image pixels)
-  height: number;  // Height (original image pixels)
+  x: number; y: number; width: number; height: number;
 }
 
 interface TransformState {
-  rotation: number;        // Fine rotation degrees (-45 to 45)
-  quarterTurns: number;    // 90° rotation count (0-3)
-  flipH: boolean;          // Horizontal flip
-  scale: number;           // Zoom level (1.0 = fit)
-  panX: number;            // Horizontal pan offset (canvas px)
-  panY: number;            // Vertical pan offset (canvas px)
-  cropRect: NormalizedRect; // Crop in [0,1] space
+  quarterTurns: number;
+  rotation: number;
+  flipH: boolean;
+  flipV: boolean;
+  scale: number;
+  panX: number;
+  panY: number;
+  cropRect: NormalizedRect;
 }
 
-interface NormalizedRect {
-  x: number;   // 0-1
-  y: number;   // 0-1
-  width: number;  // 0-1
-  height: number; // 0-1
-}
+interface NormalizedRect { x: number; y: number; width: number; height: number; }
 
 interface TransformParams {
-  rotation: number;        // Total rotation in degrees
-  flipH: boolean;
-  scale: number;
-  crop: CropRect;          // In original image coordinates
+  rotation: number; flipH: boolean; flipV: boolean; scale: number;
+  crop: { x: number; y: number; width: number; height: number };
+  outputWidth: number; outputHeight: number;
 }
 
-type CropShapeName = 'free' | 'square' | 'circle' | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3';
-
-interface CropShape {
-  type: 'free' | 'rect' | 'circle';
-  ratio?: number;  // width/height ratio for 'rect' type
-}
+type CropShapeName =
+  | 'free' | 'square' | 'circle' | 'rounded-rect'
+  | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3';
 
 type HandlePosition = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
 
-interface HitTarget {
-  type: 'handle' | 'crop-area' | 'outside' | 'none';
-  position?: HandlePosition;
-}
+interface HitTarget { type: 'handle' | 'crop-area' | 'outside' | 'none'; position?: HandlePosition; }
+interface Point { x: number; y: number; }
+interface Size { width: number; height: number; }
+```
 
-interface Point {
-  x: number;
-  y: number;
-}
+### 5.6 React binding (`@scaleflex/crop/react`)
 
-interface Size {
-  width: number;
-  height: number;
-}
+```tsx
+import { SfxCrop, useSfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+
+// Declarative
+const ref = useRef<SfxCropElement>(null);
+<SfxCrop
+  ref={ref}
+  src="/photo.jpg"
+  cropShape="free"
+  theme="dark"
+  onChange={(state) => ...}
+  onSave={({ blob, params }) => ...}
+/>
+
+// Imperative (hook)
+const crop = useSfxCrop();
+<sfx-crop ref={crop.ref} src="/photo.jpg" />;
+await crop.save();
 ```
 
 ---
@@ -666,79 +705,94 @@ interface Size {
 ### 6.1 Full Config Interface
 
 ```typescript
-interface CICropViewConfig {
+interface SfxCropConfig {
   // Source
   src: string;
 
-  // Initial state
-  initialCrop?: CropRect;
+  // Initial state (applied once on first load)
+  initialCrop?: CropRect | null;
   initialRotation?: number;          // -45 to 45
   initialScale?: number;
 
   // Crop constraints
-  cropShape?: CropShapeName;         // Default: 'free'
+  cropShape: CropShapeName;          // Default: 'free'
   customAspectRatios?: Array<{ name: string; ratio: number }>;
-  minCropSize?: number;              // Min pixels, default: 20
-  availableShapes?: CropShapeName[]; // Default: ['free','square','circle','16:9','4:3','3:2']
+  minCropSize: number;               // Min pixels, default: 20
+  availableShapes: CropShapeName[];  // Default: ['free','square','circle','rounded-rect','16:9','4:3','3:2']
 
   // Scale constraints
-  minScale?: number;                 // Default: 0.5
-  maxScale?: number;                 // Default: 5
+  minScale: number;                  // Default: 0.5
+  maxScale: number;                  // Default: 5
 
   // Theme
-  theme?: 'light' | 'dark';         // Default: 'dark'
+  theme: 'light' | 'dark';           // Default: 'dark'
 
   // UI toggles
-  showGrid?: boolean | 'interaction'; // Default: 'interaction'
-  showRotateSlider?: boolean;         // Default: true
-  showZoomSlider?: boolean;           // Default: true
-  showShapeSelector?: boolean;        // Default: true
-  showRotateButton?: boolean;         // Default: true
-  showFlipButton?: boolean;           // Default: true
-  toolbarPosition?: 'bottom' | 'top'; // Default: 'bottom'
+  showGrid: boolean | 'interaction'; // Default: 'interaction'
+  showRotateSlider: boolean;         // Default: true
+  showZoomSlider: boolean;           // Default: true
+  showShapeSelector: boolean;        // Default: true
+  showRotateButton: boolean;         // Default: true
+  showFlipButton: boolean;           // Default: true
+  toolbarPosition: 'bottom' | 'top'; // Default: 'bottom'
+  showToolbar: boolean;              // Default: true
 
-  // Overlay
-  overlayColor?: string;             // Default: 'rgba(0, 0, 0, 0.55)'
+  // Overlay / handles
+  overlayColor: string;              // Default: 'rgba(0, 0, 0, 0.55)'
+  handleSize: number;                // Default: 12
+  handleColor: string;               // Default: '#ffffff'
+  borderRadius: number;              // Default: 20 (for rounded-rect crop)
 
-  // Handles
-  handleSize?: number;               // Default: 12
-  handleColor?: string;              // Default: '#ffffff'
+  // Print bleed margins
+  showBleedMargin: boolean;
+  bleedMarginSize: number;           // Default: 10
+  bleedMarginColor: string;          // Default: 'rgba(255, 0, 0, 0.5)'
 
   // Export defaults
-  outputType?: string;               // Default: 'image/png'
-  outputQuality?: number;            // Default: 0.92
+  outputType: string;                // Default: 'image/png'
+  outputQuality: number;             // Default: 0.92
+  maxOutputWidth: number;            // 0 = original
+  maxOutputHeight: number;           // 0 = original
 
   // Animations
-  enableAnimations?: boolean;         // Default: true
-  animationSpeed?: number;            // Multiplier, default: 1.0
+  enableAnimations: boolean;         // Default: true
+  animationSpeed: number;            // Multiplier, default: 1.0
 
-  // Callbacks
-  onChange?: (state: TransformState) => void;
-  onCropChange?: (crop: CropRect) => void;
-  onImageLoad?: (image: HTMLImageElement) => void;
-  onError?: (error: Error) => void;
-  onReady?: (instance: CICropViewInstance) => void;
+  // Input toggles
+  keyboard: boolean;                 // Default: true
+  pinchZoom: boolean;                // Default: true
+  wheelZoom: boolean;                // Default: true
 }
 ```
 
-### 6.2 Data Attributes
+> `SfxCropConfig` is `@internal` — marshalled by the `<sfx-crop>` element from
+> its reflected attributes. Consumers interact through HTML attributes / DOM
+> properties / events (§5), not this shape directly.
+
+### 6.2 HTML attributes
+
+Every field above maps to a kebab-case attribute on `<sfx-crop>`:
 
 ```html
-<div
-  data-ci-crop-src="/images/photo.jpg"
-  data-ci-crop-shape="16:9"
-  data-ci-crop-theme="dark"
-  data-ci-crop-show-grid="interaction"
-  data-ci-crop-min-scale="0.5"
-  data-ci-crop-max-scale="5"
-  data-ci-crop-enable-animations="true"
-></div>
+<sfx-crop
+  src="/images/photo.jpg"
+  crop-shape="16:9"
+  theme="dark"
+  show-grid="interaction"
+  min-scale="0.5"
+  max-scale="5"
+  enable-animations="true"
+  available-shapes='["free","circle","16:9"]'
+></sfx-crop>
 ```
+
+Booleans accept presence-shorthand (`<sfx-crop show-toolbar>`), `"true"`, or
+`"false"`. Arrays accept JSON or whitespace/comma-separated strings.
 
 ### 6.3 Default Configuration
 
 ```typescript
-const DEFAULT_CONFIG: CICropViewConfig = {
+const DEFAULT_CONFIG: SfxCropConfig = {
   src: '',
   cropShape: 'free',
   minCropSize: 20,
@@ -1010,78 +1064,75 @@ toTransformParams(): {
 ## 12. Project Structure
 
 ```
-js-cloudimage-crop/
+@scaleflex/crop/
 ├── package.json
-├── tsconfig.json
+├── tsconfig.json                  # experimentalDecorators + useDefineForClassFields:false
 ├── tsconfig.build.json
-├── .eslintrc.cjs
-├── .gitignore
+├── tsconfig.react.json            # narrow DTS emission for /react
 ├── vitest.config.ts
-├── SPECIFICATION.md              ← this file
+├── CHANGELOG.md
+├── SPECIFICATION.md               ← this file
 ├── config/
-│   ├── vite.config.ts            # ESM + CJS + UMD build
-│   ├── vite.react.config.ts      # React wrapper build
-│   └── vite.demo.config.ts       # Demo dev server
+│   ├── vite.config.ts             # ESM + CJS — two entries (index, define)
+│   ├── vite.react.config.ts       # React wrapper build
+│   └── vite.demo.config.ts        # Demo dev server
 ├── demo/
 │   ├── index.html
-│   └── demo.ts
+│   ├── demo.ts
+│   ├── demo.css
+│   └── configurator.ts
 ├── src/
-│   ├── index.ts                  # export CICropView + types
+│   ├── index.ts                   # pure types + helpers (no side effects)
+│   ├── define.ts                  # side-effect entry — safeDefine all six tags
 │   ├── vite-env.d.ts
+│   ├── elements/
+│   │   ├── base.ts                # SfxCropBaseElement + safeDefine guard
+│   │   ├── icons.ts               # static SVG strings (innerHTML-safe invariant)
+│   │   ├── parse-shapes.ts        # CSV/JSON/array normaliser for available-shapes
+│   │   ├── sfx-crop.ts            # <sfx-crop> main element
+│   │   ├── sfx-crop.styles.ts     # host + container + loading/error
+│   │   ├── sfx-crop-canvas.ts     # <sfx-crop-canvas>
+│   │   ├── sfx-crop-canvas.styles.ts
+│   │   ├── sfx-crop-toolbar.ts    # <sfx-crop-toolbar>
+│   │   ├── sfx-crop-toolbar.styles.ts
+│   │   ├── sfx-crop-zoom.ts       # <sfx-crop-zoom>
+│   │   ├── sfx-crop-zoom.styles.ts
+│   │   ├── sfx-crop-rotate.ts     # <sfx-crop-rotate>
+│   │   ├── sfx-crop-rotate.styles.ts
+│   │   ├── sfx-crop-shapes.ts     # <sfx-crop-shapes>
+│   │   └── sfx-crop-shapes.styles.ts
 │   ├── core/
-│   │   ├── ci-crop-view.ts       # Main class (lifecycle, public API)
-│   │   ├── config.ts             # DEFAULT_CONFIG, mergeConfig, validateConfig
-│   │   └── types.ts              # All TypeScript interfaces
-│   ├── canvas/
-│   │   ├── renderer.ts           # rAF loop with dirty flag + animation tracking
-│   │   ├── image-layer.ts        # Draw image with transforms
-│   │   ├── overlay-layer.ts      # Semi-transparent mask outside crop
-│   │   ├── crop-frame.ts         # Crop border + 8 handles
-│   │   ├── grid-layer.ts         # Rule of thirds
-│   │   └── hit-test.ts           # Determine what's under cursor
-│   ├── transforms/
-│   │   ├── transform-state.ts    # Immutable state + pure mutation functions
-│   │   ├── matrix.ts             # 2D matrix math + coordinate conversion
-│   │   └── constrain.ts          # Aspect ratio, bounds, min scale constraints
-│   ├── interactions/
-│   │   ├── pointer-tracker.ts    # Unified mouse + touch + pointer events
-│   │   ├── drag-crop.ts          # Move crop area
-│   │   ├── resize-handles.ts     # Corner + edge resize with aspect lock
-│   │   ├── pinch-zoom.ts         # Two-finger zoom (touch)
-│   │   └── wheel-zoom.ts         # Mouse wheel zoom
-│   ├── animation/
-│   │   ├── spring.ts             # Spring physics animation
-│   │   └── lerp.ts               # Linear interpolation animation
-│   ├── ui/
-│   │   ├── toolbar.ts            # createToolbar() → ToolbarHandle
-│   │   ├── rotate-slider.ts      # Fine rotation slider -45°..+45°
-│   │   ├── zoom-slider.ts        # Scale slider
-│   │   ├── shape-selector.ts     # Custom dropdown for crop shapes
-│   │   └── icons.ts              # SVG icon strings
-│   ├── export/
-│   │   └── exporter.ts           # toCanvas, toBlob, toDataURL, toParams
+│   │   ├── crop-controller.ts     # pure factory — state/renderer/pointer/keyboard wiring
+│   │   ├── config.ts              # DEFAULT_CONFIG, mergeConfig, validateConfig
+│   │   └── types.ts               # SfxCropConfig + TransformState + CropRect + ...
+│   ├── canvas/                    # unchanged: renderer + layers + hit-test
+│   ├── transforms/                # unchanged: pure state + matrix + constrain
+│   ├── interactions/              # unchanged: pointer-tracker + drag + resize + pinch + wheel
+│   ├── animation/                 # unchanged: spring + lerp
+│   ├── export/                    # unchanged: exporter
 │   ├── a11y/
-│   │   ├── keyboard.ts           # Keyboard handler
-│   │   └── aria.ts               # ARIA attribute helpers
+│   │   ├── keyboard.ts            # attached to host (tabindex=0 via setupAria)
+│   │   └── aria.ts                # uses .sfx-cr-sr-only live region
 │   ├── utils/
-│   │   ├── dom.ts                # createElement, injectStyles, addClass
-│   │   ├── events.ts             # EventEmitter, throttle
-│   │   └── math.ts               # clamp, lerp, degreesToRadians, etc.
+│   │   ├── events.ts
+│   │   └── math.ts
 │   ├── styles/
-│   │   └── index.css             # All CSS with ci-crop- prefix
+│   │   └── shared.css.ts          # designTokens + baseStyles + keyframes + sliderThumbStyles
 │   └── react/
 │       ├── index.ts
-│       ├── ci-crop-viewer.tsx     # forwardRef wrapper component
-│       └── use-ci-crop-view.ts    # Hook with lifecycle management
+│       ├── sfx-crop.tsx           # SfxCrop (forwardRef) + event bridge
+│       └── use-sfx-crop.ts        # useSfxCrop() hook variant
 └── tests/
-    ├── setup.ts
-    ├── transform-state.test.ts
-    ├── matrix.test.ts
-    ├── constrain.test.ts
-    ├── hit-test.test.ts
-    ├── config.test.ts
-    ├── math.test.ts
-    └── exporter.test.ts
+    ├── setup.ts                   # DOMMatrix + ResizeObserver polyfills
+    ├── canvas/hit-test.test.ts
+    ├── core/config.test.ts
+    ├── elements/parse-shapes.test.ts
+    ├── elements/sfx-crop.test.ts
+    ├── elements/sfx-crop-toolbar.test.ts
+    ├── export/exporter.test.ts
+    ├── react/sfx-crop.test.tsx
+    ├── transforms/{constrain,matrix,transform-state}.test.ts
+    └── utils/math.test.ts
 ```
 
 ---
@@ -1090,59 +1141,48 @@ js-cloudimage-crop/
 
 ### 13.1 Output Formats
 
-| Format | File | Global |
-|--------|------|--------|
-| ESM | `dist/js-cloudimage-crop.esm.js` | — |
-| CJS | `dist/js-cloudimage-crop.cjs.js` | — |
-| UMD | `dist/js-cloudimage-crop.min.js` | `CICropView` |
-| Types | `dist/index.d.ts` | — |
-| React ESM | `dist/react/index.js` | — |
-| React Types | `dist/react/index.d.ts` | — |
+ESM + CJS only. No UMD. `lit` is kept external so consumers dedupe across
+Scaleflex packages.
+
+| Entry | File(s) |
+|---|---|
+| `@scaleflex/crop` (types + helpers, no side effects) | `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts` |
+| `@scaleflex/crop/define` (side-effect: registers all six tags) | `dist/define.js`, `dist/define.cjs`, `dist/define.d.ts` |
+| `@scaleflex/crop/react` (forwardRef component + hook) | `dist/react/index.js`, `dist/react/index.cjs`, `dist/react/index.d.ts` |
+| Shared chunk (Lit elements, controller, transforms) | `dist/chunks/sfx-crop-*.js|cjs` |
 
 ### 13.2 Usage Examples
 
-**CDN / UMD:**
+**CDN (ESM):**
 ```html
-<script src="https://cdn.jsdelivr.net/npm/js-cloudimage-crop/dist/js-cloudimage-crop.min.js"></script>
-<div id="crop-container"></div>
-<script>
-  const crop = new CICropView('#crop-container', {
-    src: '/photos/landscape.jpg',
-    cropShape: '16:9',
-    theme: 'dark',
-  });
-</script>
+<script type="module"
+        src="https://esm.sh/@scaleflex/crop/define"></script>
+<sfx-crop src="/photos/landscape.jpg" crop-shape="16:9" theme="dark"></sfx-crop>
 ```
 
 **ESM:**
-```typescript
-import { CICropView } from 'js-cloudimage-crop';
+```ts
+import '@scaleflex/crop/define';
 
-const crop = new CICropView(document.getElementById('crop'), {
-  src: '/photos/landscape.jpg',
-  cropShape: 'free',
-  onChange: (state) => console.log('State changed:', state),
-});
+const crop = document.getElementById('crop');
+crop.addEventListener('sfx-crop-change', (e) => console.log(e.detail));
 
-// Later: export result
 const blob = await crop.toBlob('image/jpeg', 0.9);
 ```
 
 **React:**
 ```tsx
-import { CICropViewer } from 'js-cloudimage-crop/react';
+import { SfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
 
 function App() {
-  const cropRef = useRef(null);
-
+  const ref = useRef<SfxCropElement>(null);
   const handleExport = async () => {
-    const blob = await cropRef.current?.toBlob('image/jpeg', 0.9);
+    const blob = await ref.current?.toBlob('image/jpeg', 0.9);
     // ...
   };
-
   return (
-    <CICropViewer
-      ref={cropRef}
+    <SfxCrop
+      ref={ref}
       src="/photos/landscape.jpg"
       cropShape="16:9"
       theme="dark"
@@ -1152,19 +1192,10 @@ function App() {
 }
 ```
 
-**Data Attributes (auto-init):**
-```html
-<div
-  data-ci-crop-src="/photos/landscape.jpg"
-  data-ci-crop-shape="16:9"
-  data-ci-crop-theme="dark"
-></div>
-<script src="js-cloudimage-crop.min.js"></script>
-<script>CICropView.autoInit();</script>
-```
-
 ### 13.3 Bundle Size Target
 
-- Core bundle: < 20KB gzipped
-- With React wrapper: < 25KB gzipped
+- `.` entry (types + helpers): < 5KB gzipped
+- `./define` entry + shared chunk: < 25KB gzipped
+- `./react` entry (React wrapper alone): < 3KB gzipped
+- Total cold-start via `./define`: ~21KB gzipped
 - Zero runtime dependencies
