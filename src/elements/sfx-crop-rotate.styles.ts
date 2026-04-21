@@ -4,8 +4,8 @@ export const sfxCropRotateStyles = css`
   :host {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 0 4px;
+    gap: 8px;
+    padding: 0 8px;
   }
 
   .sfx-cr-rotate-track {
@@ -19,21 +19,23 @@ export const sfxCropRotateStyles = css`
     left: 50%;
     top: 50%;
     width: 1px;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.4);
+    height: 10px;
+    background: var(--sfx-cr-text-muted);
     transform: translate(-50%, -50%);
     pointer-events: none;
   }
 
   .sfx-cr-rotate-range-label {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
+    font-weight: 500;
+    color: var(--sfx-cr-text-muted);
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2px;
   }
 
   input[type="range"] {
-    width: 120px;
+    width: 128px;
     height: 3px;
     -webkit-appearance: none;
     appearance: none;
@@ -45,15 +47,17 @@ export const sfxCropRotateStyles = css`
 
   .sfx-cr-rotate-value {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.6);
-    min-width: 40px;
+    font-weight: 500;
+    color: var(--sfx-cr-text-secondary);
+    min-width: 44px;
     text-align: center;
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2px;
   }
 
   @media (max-width: 768px) { input[type="range"] { width: 100px; } }
   @media (max-width: 480px) {
-    input[type="range"] { width: 80px; }
+    input[type="range"] { width: 72px; }
     .sfx-cr-rotate-range-label { display: none; }
   }
 `;

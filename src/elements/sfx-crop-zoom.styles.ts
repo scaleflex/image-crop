@@ -1,17 +1,22 @@
 import { css } from 'lit';
 
+/**
+ * Zoom bar styled as a secondary glassy pill floating above the toolbar —
+ * mirrors uploader's compact utility bars.
+ */
 export const sfxCropZoomStyles = css`
   :host {
     position: absolute;
-    bottom: 60px;
+    bottom: 72px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
+    gap: 10px;
+    padding: 8px 14px;
     background: var(--sfx-cr-zoom-bar-bg);
-    border-radius: 20px;
+    border: 1px solid var(--sfx-cr-toolbar-border);
+    border-radius: 50px;
     box-shadow: var(--sfx-cr-toolbar-shadow);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -24,31 +29,38 @@ export const sfxCropZoomStyles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--sfx-cr-text-secondary);
     cursor: pointer;
     padding: 0;
-    border-radius: 4px;
-    transition: color var(--sfx-cr-transition), background var(--sfx-cr-transition);
+    border-radius: 50%;
+    transition:
+      color var(--sfx-cr-transition),
+      background var(--sfx-cr-transition),
+      transform var(--sfx-cr-transition);
   }
   button:hover {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--sfx-cr-primary);
     background: var(--sfx-cr-btn-hover-bg);
+    transform: translateY(-1px);
+  }
+  button:active {
+    transform: translateY(0) scale(0.96);
   }
   button:focus-visible {
-    outline: 2px solid var(--sfx-cr-accent);
+    outline: 2px solid var(--sfx-cr-ring);
     outline-offset: 2px;
   }
   button svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
   }
 
   input[type="range"] {
-    width: 100px;
+    width: 110px;
     height: 3px;
     -webkit-appearance: none;
     appearance: none;
@@ -60,16 +72,16 @@ export const sfxCropZoomStyles = css`
 
   .sfx-cr-zoom-label {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.6);
-    min-width: 36px;
+    font-weight: 600;
+    color: var(--sfx-cr-text-secondary);
+    min-width: 40px;
     text-align: center;
     font-variant-numeric: tabular-nums;
-    opacity: 0;
-    transition: opacity 150ms ease;
-    pointer-events: none;
+    letter-spacing: 0.2px;
+    transition: color 150ms ease;
   }
 
-  :host(:hover) .sfx-cr-zoom-label { opacity: 1; }
+  :host(:hover) .sfx-cr-zoom-label { color: var(--sfx-cr-primary); }
 
-  @media (max-width: 480px) { input[type="range"] { width: 70px; } }
+  @media (max-width: 480px) { input[type="range"] { width: 80px; } }
 `;

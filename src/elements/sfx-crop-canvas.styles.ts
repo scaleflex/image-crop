@@ -7,6 +7,7 @@ export const sfxCropCanvasStyles = css`
     height: 100%;
     min-width: 0;
     min-height: 0;
+    background: var(--sfx-cr-canvas-bg);
   }
 
   canvas {

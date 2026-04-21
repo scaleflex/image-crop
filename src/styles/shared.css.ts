@@ -1,66 +1,100 @@
 import { css } from 'lit';
 
 /**
- * Design tokens — declared on `:host` of the top-level `<sfx-crop>` only.
- * Children inherit the resolved values through CSS custom-property
- * inheritance (tokens cascade across shadow boundaries automatically), so
- * sub-elements' `var(--sfx-cr-*)` lookups always see the parent's current
- * theme values. Consumers override any of these from light DOM, e.g.
- * `<sfx-crop style="--sfx-cr-accent:#ff3366">`.
+ * Design tokens — matched 1:1 with `@scaleflex/uploader`'s `--sfx-up-*`
+ * palette so a host page that theme-embeds both components inherits a
+ * consistent Scaleflex look. Override any token from light DOM, e.g.
+ * `<sfx-crop style="--sfx-cr-primary:#ff3366">`.
+ *
+ * Light is the default (matches uploader's single theme); `theme="dark"`
+ * remains available for consumers that want a darker canvas surround.
+ * Tokens cascade through shadow boundaries via CSS custom-property
+ * inheritance, so sub-elements never redeclare them.
  */
 export const designTokens = css`
   :host {
-    --sfx-cr-bg: #1a1a1a;
-    --sfx-cr-canvas-bg: #111111;
-    --sfx-cr-toolbar-bg: rgba(28, 28, 30, 0.92);
-    --sfx-cr-toolbar-color: #f0f0f0;
-    --sfx-cr-toolbar-border-radius: 10px;
-    --sfx-cr-toolbar-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+    /* Palette (Scaleflex light) */
+    --sfx-cr-primary: #2563eb;
+    --sfx-cr-primary-hover: #1d4ed8;
+    --sfx-cr-primary-mid: #3b82f6;
+    --sfx-cr-primary-bg: #eff6ff;
+    --sfx-cr-primary-glow: rgba(37, 99, 235, 0.18);
+
+    --sfx-cr-success: #16a34a;
+    --sfx-cr-error: #dc2626;
+
+    --sfx-cr-text: #1e293b;
+    --sfx-cr-text-secondary: #475569;
+    --sfx-cr-text-muted: #94a3b8;
+
+    --sfx-cr-border: #e8edf5;
+    --sfx-cr-border-light: #f1f5f9;
+
+    --sfx-cr-bg: #ffffff;
+    --sfx-cr-surface: #f8fafc;
+    --sfx-cr-canvas-bg: #f1f5f9;
+
+    --sfx-cr-ring: oklch(0.578 0.198 268.129 / 0.7);
+    --sfx-cr-shadow: rgba(0, 0, 0, 0.1);
+
+    /* Derived — kept for internal reuse */
+    --sfx-cr-toolbar-bg: rgba(255, 255, 255, 0.85);
+    --sfx-cr-toolbar-color: var(--sfx-cr-text);
+    --sfx-cr-toolbar-border: rgba(226, 232, 240, 0.6);
+    --sfx-cr-toolbar-shadow: 0 2px 10px rgba(37, 99, 235, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
     --sfx-cr-btn-size: 36px;
-    --sfx-cr-btn-radius: 8px;
-    --sfx-cr-btn-hover-bg: rgba(255, 255, 255, 0.08);
-    --sfx-cr-btn-active-bg: rgba(255, 255, 255, 0.14);
-    --sfx-cr-accent: #4fc3f7;
-    --sfx-cr-accent-hover: #81d4fa;
-    --sfx-cr-separator-color: rgba(255, 255, 255, 0.1);
-    --sfx-cr-slider-track: rgba(255, 255, 255, 0.15);
-    --sfx-cr-slider-fill: #4fc3f7;
-    --sfx-cr-slider-thumb: #ffffff;
-    --sfx-cr-dropdown-bg: rgba(38, 38, 40, 0.96);
-    --sfx-cr-dropdown-hover: rgba(255, 255, 255, 0.06);
-    --sfx-cr-dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
-    --sfx-cr-transition: 200ms ease;
-    --sfx-cr-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --sfx-cr-error-color: #ff6b6b;
-    --sfx-cr-success-color: #69db7c;
-    --sfx-cr-zoom-bar-bg: rgba(28, 28, 30, 0.6);
+    --sfx-cr-btn-radius: 6px;
+    --sfx-cr-btn-hover-bg: var(--sfx-cr-primary-bg);
+    --sfx-cr-btn-active-bg: rgba(37, 99, 235, 0.14);
+    --sfx-cr-separator-color: var(--sfx-cr-border-light);
+    --sfx-cr-slider-track: var(--sfx-cr-border);
+    --sfx-cr-slider-fill: var(--sfx-cr-primary);
+    --sfx-cr-slider-thumb: var(--sfx-cr-primary);
+    --sfx-cr-dropdown-bg: #ffffff;
+    --sfx-cr-dropdown-hover: var(--sfx-cr-primary-bg);
+    --sfx-cr-dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    --sfx-cr-zoom-bar-bg: rgba(255, 255, 255, 0.85);
+    --sfx-cr-transition: 0.15s ease;
+    --sfx-cr-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    /* Outer card (when <sfx-crop> fills the host) */
+    --sfx-cr-radius: 16px;
+    --sfx-cr-card-shadow: 0 28px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
   }
 
-  :host([theme="light"]) {
-    --sfx-cr-bg: #f5f5f7;
-    --sfx-cr-canvas-bg: #e8e8e8;
-    --sfx-cr-toolbar-bg: rgba(255, 255, 255, 0.92);
-    --sfx-cr-toolbar-color: #1d1d1f;
-    --sfx-cr-btn-hover-bg: rgba(0, 0, 0, 0.05);
-    --sfx-cr-btn-active-bg: rgba(0, 0, 0, 0.1);
-    --sfx-cr-accent: #0071e3;
-    --sfx-cr-accent-hover: #0077ed;
-    --sfx-cr-separator-color: rgba(0, 0, 0, 0.1);
-    --sfx-cr-slider-track: rgba(0, 0, 0, 0.12);
-    --sfx-cr-slider-fill: #0071e3;
-    --sfx-cr-slider-thumb: #ffffff;
-    --sfx-cr-dropdown-bg: rgba(255, 255, 255, 0.96);
-    --sfx-cr-dropdown-hover: rgba(0, 0, 0, 0.06);
-    --sfx-cr-dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
-    --sfx-cr-zoom-bar-bg: rgba(255, 255, 255, 0.6);
+  /* Dark variant — keeps the editor usable on dark demo pages while
+     leaning on the same palette vocabulary. */
+  :host([theme="dark"]) {
+    --sfx-cr-text: #f1f5f9;
+    --sfx-cr-text-secondary: #cbd5e1;
+    --sfx-cr-text-muted: #94a3b8;
+
+    --sfx-cr-border: rgba(255, 255, 255, 0.12);
+    --sfx-cr-border-light: rgba(255, 255, 255, 0.08);
+
+    --sfx-cr-bg: #0f172a;
+    --sfx-cr-surface: #1e293b;
+    --sfx-cr-canvas-bg: #0b1220;
+
+    --sfx-cr-toolbar-bg: rgba(15, 23, 42, 0.85);
+    --sfx-cr-toolbar-color: #f1f5f9;
+    --sfx-cr-toolbar-border: rgba(255, 255, 255, 0.08);
+    --sfx-cr-toolbar-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+    --sfx-cr-btn-hover-bg: rgba(37, 99, 235, 0.22);
+    --sfx-cr-btn-active-bg: rgba(37, 99, 235, 0.32);
+
+    --sfx-cr-slider-track: rgba(255, 255, 255, 0.12);
+
+    --sfx-cr-dropdown-bg: rgba(15, 23, 42, 0.98);
+    --sfx-cr-dropdown-hover: rgba(37, 99, 235, 0.22);
+    --sfx-cr-dropdown-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --sfx-cr-zoom-bar-bg: rgba(15, 23, 42, 0.85);
+
+    --sfx-cr-card-shadow: 0 28px 80px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.2);
   }
 `;
 
-/**
- * Shared helpers reused across multiple elements' shadow trees:
- * - `.sfx-cr-sr-only` — visually-hidden, screen-reader-visible region
- * - reduced-motion transition clamp
- */
 export const baseStyles = css`
   .sfx-cr-sr-only {
     position: absolute;
@@ -112,29 +146,42 @@ export const zoomEnterKeyframes = css`
   }
 `;
 
+export const modalInKeyframes = css`
+  @keyframes sfx-cr-card-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+`;
+
 /** Shared slider-thumb styling used by zoom + rotate inputs. */
 export const sliderThumbStyles = css`
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: var(--sfx-cr-slider-thumb);
     cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.35);
     transition: transform 150ms ease, box-shadow 150ms ease;
   }
   input[type="range"]::-webkit-slider-thumb:hover {
     transform: scale(1.15);
-    box-shadow: 0 0 0 4px rgba(79, 195, 247, 0.25);
+    box-shadow: 0 0 0 5px var(--sfx-cr-primary-glow);
   }
   input[type="range"]::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: var(--sfx-cr-slider-thumb);
     border: none;
     cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.35);
   }
 `;

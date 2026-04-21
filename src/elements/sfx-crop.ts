@@ -17,7 +17,7 @@ import type { SfxCropZoomElement } from './sfx-crop-zoom';
 import './sfx-crop-zoom';
 import { SfxCropBaseElement } from './base';
 import { parseAvailableShapes, DEFAULT_SHAPES } from './parse-shapes';
-import { designTokens, baseStyles, spinKeyframes } from '../styles/shared.css';
+import { designTokens, baseStyles, spinKeyframes, modalInKeyframes } from '../styles/shared.css';
 import { sfxCropStyles } from './sfx-crop.styles';
 
 /**
@@ -59,7 +59,7 @@ const SHOW_GRID_CONVERTER = {
  * `::part(canvas-host|toolbar|zoom|loading|error|container)` from light DOM.
  */
 export class SfxCropElement extends SfxCropBaseElement {
-  static styles = [designTokens, baseStyles, spinKeyframes, sfxCropStyles];
+  static styles = [designTokens, baseStyles, spinKeyframes, modalInKeyframes, sfxCropStyles];
 
   // === Attributes mirroring SfxCropConfig ===
 

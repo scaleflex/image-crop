@@ -1,10 +1,12 @@
 import { css } from 'lit';
 
 /**
- * `<sfx-crop>` host + container + loading/error overlay rules.
+ * `<sfx-crop>` host + container + loading/error overlay.
  *
- * Paired with {@link designTokens} and {@link baseStyles} from
- * `../styles/shared.css` in the element's `static styles`.
+ * Visual language tracks `@scaleflex/uploader`: Inter typography, 16px outer
+ * radius, deep soft shadow, primary-blue accents for spinners and focus.
+ * Works embedded on any page surface (light or dark); `--sfx-cr-*` tokens
+ * swap automatically when the host carries `theme="dark"`.
  */
 export const sfxCropStyles = css`
   :host {
@@ -12,12 +14,14 @@ export const sfxCropStyles = css`
     position: relative;
     width: 100%;
     height: 100%;
+    font-family: var(--sfx-cr-font);
+    color: var(--sfx-cr-text);
   }
 
   :host([hidden]) { display: none; }
 
   :host(:focus-visible) {
-    outline: 2px solid var(--sfx-cr-accent);
+    outline: 2px solid var(--sfx-cr-ring);
     outline-offset: 2px;
   }
 
@@ -27,12 +31,15 @@ export const sfxCropStyles = css`
     width: 100%;
     height: 100%;
     background: var(--sfx-cr-bg);
-    border-radius: 12px;
+    border-radius: var(--sfx-cr-radius);
+    box-shadow: var(--sfx-cr-card-shadow);
     font-family: var(--sfx-cr-font);
     user-select: none;
     -webkit-user-select: none;
+    animation: sfx-cr-card-in 280ms cubic-bezier(0.34, 1.2, 0.64, 1);
   }
 
+  /* ====== Loading ====== */
   .sfx-cr-loading {
     position: absolute;
     inset: 0;
@@ -43,7 +50,7 @@ export const sfxCropStyles = css`
     gap: 16px;
     background: var(--sfx-cr-bg);
     z-index: 10;
-    transition: opacity 300ms ease;
+    transition: opacity 280ms ease;
   }
   .sfx-cr-loading--hidden {
     opacity: 0;
@@ -53,17 +60,20 @@ export const sfxCropStyles = css`
   .sfx-cr-loading-spinner {
     width: 36px;
     height: 36px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--sfx-cr-accent);
+    border: 3px solid var(--sfx-cr-border);
+    border-top-color: var(--sfx-cr-primary);
     border-radius: 50%;
     animation: sfx-cr-spin 0.8s linear infinite;
   }
 
   .sfx-cr-loading-text {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sfx-cr-text-secondary);
+    letter-spacing: 0.2px;
   }
 
+  /* ====== Error ====== */
   .sfx-cr-error {
     position: absolute;
     inset: 0;
@@ -72,10 +82,13 @@ export const sfxCropStyles = css`
     align-items: center;
     justify-content: center;
     gap: 12px;
+    padding: 32px;
     background: var(--sfx-cr-bg);
     z-index: 10;
-    color: var(--sfx-cr-error-color);
+    color: var(--sfx-cr-error);
     font-size: 14px;
+    font-weight: 500;
+    text-align: center;
   }
   .sfx-cr-error--visible { display: flex; }
 `;
