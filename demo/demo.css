@@ -313,9 +313,9 @@ kbd {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 10%, rgba(37, 99, 235, 0.35), transparent 45%),
-    radial-gradient(circle at 80% 30%, rgba(0, 212, 170, 0.22), transparent 40%),
-    radial-gradient(circle at 50% 90%, rgba(37, 99, 235, 0.22), transparent 50%);
+    radial-gradient(ellipse 60% 50% at 25% 18%, rgba(37, 99, 235, 0.18), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 78% 28%, rgba(0, 212, 170, 0.08), transparent 75%),
+    radial-gradient(ellipse 70% 55% at 55% 95%, rgba(37, 99, 235, 0.1), transparent 75%);
   z-index: -2;
 }
 .demo-hero::after {
@@ -323,12 +323,12 @@ kbd {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
   background-size: 60px 60px;
   z-index: -1;
-  mask-image: radial-gradient(ellipse at center, #000 50%, transparent 85%);
-  -webkit-mask-image: radial-gradient(ellipse at center, #000 50%, transparent 85%);
+  mask-image: radial-gradient(ellipse at center, #000 35%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, transparent 80%);
 }
 .demo-hero-inner { max-width: 880px; margin: 0 auto; text-align: center; }
 .demo-hero-badge {
