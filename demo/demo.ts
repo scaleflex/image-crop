@@ -186,15 +186,13 @@ const EXAMPLE_GROUPS: ExampleGroup[] = [
     label: 'Crop configuration',
     items: [
       { path: '/examples/shapes',         label: 'Shape presets' },
-      { path: '/examples/aspect-ratios',  label: 'Custom aspect ratios' },
       { path: '/examples/initial-state',  label: 'Initial state' },
     ],
   },
   {
     label: 'Interactions',
     items: [
-      { path: '/examples/transforms',     label: 'Rotate / flip / zoom' },
-      { path: '/examples/bleed-margin',   label: 'Print bleed margins' },
+      { path: '/examples/transforms',     label: 'Transforms & guides' },
     ],
   },
   {
@@ -202,19 +200,13 @@ const EXAMPLE_GROUPS: ExampleGroup[] = [
     items: [
       { path: '/examples/events',         label: 'Event handling' },
       { path: '/examples/export',         label: 'Export (blob / data-URL)' },
-      { path: '/examples/custom-icons',   label: 'Custom icons' },
     ],
   },
   {
     label: 'Appearance',
     items: [
       { path: '/examples/theming',        label: 'Theming tokens' },
-    ],
-  },
-  {
-    label: 'Playground',
-    items: [
-      { path: '/examples/configurator',   label: 'Live configurator' },
+      { path: '/examples/custom-icons',   label: 'Custom icons' },
     ],
   },
 ];
@@ -422,7 +414,9 @@ function renderHome(): string {
   ];
 
   const installSnippet = `npm install @scaleflex/crop`;
-  const esmSnippet = `import '@scaleflex/crop/define';
+  const esmSnippet = `<script type="module">
+  import '@scaleflex/crop/define';
+</script>
 
 <sfx-crop
   src="/photo.jpg"
@@ -447,7 +441,7 @@ export function Editor() {
       <div class="demo-hero-inner">
         <div class="demo-hero-badge">
           <span class="demo-hero-badge-dot"></span>
-          @scaleflex/crop · v2.0
+          @scaleflex/crop
         </div>
         <h1 class="demo-hero-title">Crop</h1>
         <p class="demo-hero-sub">Framework-agnostic Web Component for interactive image cropping — rotate, flip, zoom, and shape presets in a single <code>&lt;sfx-crop&gt;</code> tag.</p>
@@ -473,7 +467,7 @@ export function Editor() {
         <p class="demo-lead">A fully interactive crop editor embedded directly in this page — drag corners, rotate with the slider, switch crop shapes.</p>
         <div class="demo-card demo-card--lg demo-crop-wrap">
           <button type="button" class="demo-theme-toggle" aria-label="Toggle crop theme" aria-pressed="false">${ICONS.moon}</button>
-          <sfx-crop id="home-viewer" style="max-width:1200px;max-height:640px"></sfx-crop>
+          <sfx-crop id="home-viewer" style="display:block;max-width:1200px;max-height:640px;margin:0 auto"></sfx-crop>
         </div>
       </div>
     </section>
@@ -1370,52 +1364,21 @@ function renderExampleShapes(): string {
 el.setCropShape('rounded-rect');
 el.borderRadius = 28;`, lang: 'typescript' },
       ])}
-    `,
-  );
-}
 
-function renderExampleAspectRatios(): string {
-  return examplePage(
-    'Custom aspect ratios',
-    'Add project-specific ratios via <code>customAspectRatios</code>, then narrow the selector to a curated subset with <code>availableShapes</code>.',
-    `
-      <div class="demo-example-live">
-        <sfx-crop id="ex-aspect" style="width:100%;height:520px;display:block"></sfx-crop>
-      </div>
-      <p>The shape dropdown above offers only a curated subset — <strong>Free</strong>, <strong>16:9</strong>, <strong>Square</strong>, plus the custom <strong>Cinema</strong> (2.35:1) and <strong>Story</strong> (9:16) ratios added at runtime.</p>
-
+      <h2>Custom ratios</h2>
+      <p>Pass any <code>"W:H"</code> string — built-in or ad-hoc — to <code>crop-shape</code> and to <code>availableShapes</code>. The component parses the ratio on the fly.</p>
       ${tabbedCode([
         { label: 'HTML', code: `<sfx-crop
   src="/photo.jpg"
-  crop-shape="Cinema"
-  available-shapes='["free","16:9","square","Cinema","Story"]'
-></sfx-crop>
-
-<script type="module">
-  import '@scaleflex/crop/define';
-  const el = document.querySelector('sfx-crop');
-  el.customAspectRatios = [
-    { name: 'Cinema', ratio: 2.35 },
-    { name: 'Story',  ratio: 9 / 16 },
-  ];
-</script>`, lang: 'markup' },
+  crop-shape="2.35:1"
+  available-shapes='["free","square","16:9","2.35:1","9:16"]'
+></sfx-crop>`, lang: 'markup' },
         { label: 'React', code: `<SfxCrop
   src="/photo.jpg"
-  cropShape="Cinema"
-  availableShapes={['free', '16:9', 'square', 'Cinema', 'Story']}
-  customAspectRatios={[
-    { name: 'Cinema', ratio: 2.35 },
-    { name: 'Story',  ratio: 9 / 16 },
-  ]}
+  cropShape="2.35:1"
+  availableShapes={['free', 'square', '16:9', '2.35:1', '9:16']}
 />`, lang: 'tsx' },
       ])}
-
-      <h2>Notes</h2>
-      <ul>
-        <li><code>ratio</code> is width / height. Any positive finite number works (<code>2.35</code>, <code>9 / 16</code>, <code>1.618</code>).</li>
-        <li><code>availableShapes</code> accepts both built-in preset names (<code>'free'</code>, <code>'16:9'</code>, …) and custom names declared in <code>customAspectRatios</code>.</li>
-        <li>Ad-hoc <code>'W:H'</code> strings are also valid in <code>availableShapes</code> without registering them (<code>'21:9'</code>, <code>'11:8'</code>) — the component parses the ratio on the fly.</li>
-      </ul>
     `,
   );
 }
@@ -1464,8 +1427,8 @@ el.src             = '/photo.jpg';`, lang: 'typescript' },
 
 function renderExampleTransforms(): string {
   return examplePage(
-    'Rotate / flip / zoom',
-    'Drive rotation and scale from external controls or keyboard shortcuts.',
+    'Transforms & guides',
+    'Drive rotation, flip, and scale from external controls or keyboard shortcuts. Toggle print bleed guides for print-ready crops.',
     `
       <div class="demo-example-live">
         <sfx-crop id="ex-tx" style="width:100%;height:520px;display:block"></sfx-crop>
@@ -1496,6 +1459,24 @@ document.getElementById('reset').onclick = () => crop.reset();`, 'typescript')}
           </tbody>
         </table>
       </div>
+
+      <h2>Print bleed guides</h2>
+      <p>Safe-area guides drawn inside the crop rectangle — switch them on for print-ready crops where bleed must stay clear of trim.</p>
+      <div class="demo-example-live">
+        <sfx-crop
+          id="ex-bleed"
+          show-bleed-margin
+          bleed-margin-size="16"
+          bleed-margin-color="rgba(37, 99, 235, 0.65)"
+          style="width:100%;height:420px;display:block"
+        ></sfx-crop>
+      </div>
+      ${codeBlock(`<sfx-crop
+  src="/photo.jpg"
+  show-bleed-margin
+  bleed-margin-size="16"
+  bleed-margin-color="rgba(37, 99, 235, 0.65)"
+></sfx-crop>`, 'markup')}
     `,
   );
 }
@@ -1594,15 +1575,9 @@ el.icons = {
     'Custom icons',
     'Swap any toolbar glyph via the <code>icons</code> property — per-slot SVG strings, untouched slots keep the Lucide defaults.',
     `
-      <div class="demo-example-grid">
-        <div class="demo-example-cell">
-          <div class="demo-example-cell-label">Default icons</div>
-          <sfx-crop class="ex-icons-cell" data-variant="default" style="height:380px;display:block"></sfx-crop>
-        </div>
-        <div class="demo-example-cell">
-          <div class="demo-example-cell-label">Custom icons</div>
-          <sfx-crop class="ex-icons-cell" data-variant="custom" style="height:380px;display:block"></sfx-crop>
-        </div>
+      <div class="demo-example-cell demo-example-cell--highlight">
+        <div class="demo-example-cell-label">Custom icons</div>
+        <sfx-crop class="ex-icons-cell" data-variant="custom" style="height:480px;display:block"></sfx-crop>
       </div>
 
       ${tabbedCode([
@@ -1639,31 +1614,6 @@ el.icons = {
 
       <h2>Security</h2>
       <p>Values are injected with <code>unsafeHTML</code>. Treat them the same way as the library's built-in icons — <strong>static, author-trusted content only</strong>. Never concatenate user input into these strings.</p>
-    `,
-  );
-}
-
-function renderExampleBleed(): string {
-  return examplePage(
-    'Print bleed margins',
-    'Safe-area guides drawn inside the crop rectangle — useful for print-ready crops.',
-    `
-      <div class="demo-example-live">
-        <sfx-crop
-          id="ex-bleed"
-          show-bleed-margin
-          bleed-margin-size="16"
-          bleed-margin-color="rgba(37, 99, 235, 0.65)"
-          style="width:100%;height:480px;display:block"
-        ></sfx-crop>
-      </div>
-
-      ${codeBlock(`<sfx-crop
-  src="/photo.jpg"
-  show-bleed-margin
-  bleed-margin-size="16"
-  bleed-margin-color="rgba(37, 99, 235, 0.65)"
-></sfx-crop>`, 'markup')}
     `,
   );
 }
@@ -1726,93 +1676,77 @@ function renderExampleTheming(): string {
     'Theming tokens',
     'Override any <code>--sfx-cr-*</code> property from the host page.',
     `
-      <div class="demo-example-grid">
-        <div class="demo-example-cell">
-          <div class="demo-example-cell-label">Mint</div>
-          <sfx-crop class="ex-theme" data-accent="mint" style="--sfx-cr-primary:#16a34a;--sfx-cr-primary-hover:#15803d;--sfx-cr-primary-bg:#dcfce7;--sfx-cr-primary-glow:rgba(22,163,74,.22);height:320px;display:block"></sfx-crop>
-        </div>
-        <div class="demo-example-cell">
-          <div class="demo-example-cell-label">Rose</div>
-          <sfx-crop class="ex-theme" data-accent="rose" style="--sfx-cr-primary:#e11d48;--sfx-cr-primary-hover:#be123c;--sfx-cr-primary-bg:#ffe4e6;--sfx-cr-primary-glow:rgba(225,29,72,.22);height:320px;display:block"></sfx-crop>
-        </div>
-        <div class="demo-example-cell">
-          <div class="demo-example-cell-label">Violet</div>
-          <sfx-crop class="ex-theme" data-accent="violet" style="--sfx-cr-primary:#7c3aed;--sfx-cr-primary-hover:#6d28d9;--sfx-cr-primary-bg:#ede9fe;--sfx-cr-primary-glow:rgba(124,58,237,.22);height:320px;display:block"></sfx-crop>
-        </div>
+      <div class="demo-example-cell">
+        <div class="demo-example-cell-label">Sunset — full token override</div>
+        <sfx-crop class="ex-theme" data-accent="sunset" style="
+          --sfx-cr-primary:#ea580c;
+          --sfx-cr-primary-hover:#c2410c;
+          --sfx-cr-primary-bg:#ffedd5;
+          --sfx-cr-primary-glow:rgba(234,88,12,.28);
+          --sfx-cr-text:#7c2d12;
+          --sfx-cr-text-secondary:#ea580c;
+          --sfx-cr-text-muted:#fdba74;
+          --sfx-cr-bg:#fff7ed;
+          --sfx-cr-canvas-bg:#fff1e0;
+          --sfx-cr-overlay-color:rgba(255,237,213,.78);
+          --sfx-cr-border:#fed7aa;
+          --sfx-cr-frame-color:#ea580c;
+          --sfx-cr-handle-fill:#ea580c;
+          --sfx-cr-handle-stroke:#fff7ed;
+          --sfx-cr-ring:rgba(234,88,12,.55);
+          --sfx-cr-toolbar-bg:rgba(255,247,237,.92);
+          --sfx-cr-toolbar-border:rgba(234,88,12,.25);
+          --sfx-cr-toolbar-shadow:0 4px 16px rgba(234,88,12,.18);
+          --sfx-cr-dropdown-bg:#fff7ed;
+          --sfx-cr-dropdown-hover:#ffedd5;
+          --sfx-cr-radius:24px;
+          max-width:1200px;max-height:520px;display:block;margin:0 auto
+        "></sfx-crop>
       </div>
 
-      ${codeBlock(`sfx-crop.brand-mint {
-  --sfx-cr-primary: #16a34a;
-  --sfx-cr-primary-hover: #15803d;
-  --sfx-cr-primary-bg: #dcfce7;
-  --sfx-cr-primary-glow: rgba(22, 163, 74, 0.22);
+      <p class="demo-lead" style="margin-top:24px;text-align:left;">
+        Every <code>--sfx-cr-*</code> token can be re-pointed from the host page. Below is a full sunset palette
+        — note how it repaints the toolbar background, the icon color (<code>--sfx-cr-text-secondary</code>),
+        the canvas dimming overlay, the crop frame &amp; handles, and even the outer card radius.
+      </p>
+
+      ${codeBlock(`sfx-crop.brand-sunset {
+  /* Accent — buttons, hover/active, sliders, focus rings */
+  --sfx-cr-primary:        #ea580c;
+  --sfx-cr-primary-hover:  #c2410c;
+  --sfx-cr-primary-bg:     #ffedd5;
+  --sfx-cr-primary-glow:   rgba(234, 88, 12, 0.28);
+
+  /* Text + ICON colors. Toolbar icons inherit --sfx-cr-text-secondary
+     in their idle state; --sfx-cr-text drives ruler ticks + value text. */
+  --sfx-cr-text:           #7c2d12;
+  --sfx-cr-text-secondary: #ea580c;   /* idle icon color */
+  --sfx-cr-text-muted:     #fdba74;
+
+  /* Surfaces */
+  --sfx-cr-bg:             #fff7ed;
+  --sfx-cr-canvas-bg:      #fff1e0;
+  --sfx-cr-overlay-color:  rgba(255, 237, 213, 0.78);  /* outside-crop dim */
+  --sfx-cr-border:         #fed7aa;
+
+  /* Crop frame + handle */
+  --sfx-cr-frame-color:    #ea580c;
+  --sfx-cr-handle-fill:    #ea580c;
+  --sfx-cr-handle-stroke:  #fff7ed;
+  --sfx-cr-ring:           rgba(234, 88, 12, 0.55);
+
+  /* Toolbar pill */
+  --sfx-cr-toolbar-bg:     rgba(255, 247, 237, 0.92);
+  --sfx-cr-toolbar-border: rgba(234, 88, 12, 0.25);
+  --sfx-cr-toolbar-shadow: 0 4px 16px rgba(234, 88, 12, 0.18);
+
+  /* Aspect-ratio dropdown */
+  --sfx-cr-dropdown-bg:    #fff7ed;
+  --sfx-cr-dropdown-hover: #ffedd5;
+
+  /* Outer card */
+  --sfx-cr-radius:         24px;
 }`, 'css')}
-    `,
-  );
-}
-
-function renderExampleConfigurator(): string {
-  return examplePage(
-    'Live configurator',
-    'Toggle every option in real time and watch the generated snippet update.',
-    `
-      <div class="demo-configurator">
-        <div class="demo-configurator-preview">
-          <sfx-crop id="cfg-viewer" style="width:100%;height:520px;display:block"></sfx-crop>
-        </div>
-        <div class="demo-configurator-panel">
-          <div class="demo-configurator-group">
-            <h4>Crop</h4>
-            <label>Shape
-              <select id="cfg-crop-shape">
-                <option value="free" selected>free</option>
-                <option value="square">square</option>
-                <option value="circle">circle</option>
-                <option value="rounded-rect">rounded-rect</option>
-                <option value="16:9">16:9</option>
-                <option value="4:3">4:3</option>
-                <option value="3:2">3:2</option>
-                <option value="2:3">2:3</option>
-                <option value="3:4">3:4</option>
-                <option value="9:16">9:16</option>
-              </select>
-            </label>
-            <label>Theme
-              <select id="cfg-theme">
-                <option value="light" selected>light</option>
-                <option value="dark">dark</option>
-              </select>
-            </label>
-            <label>Toolbar position
-              <select id="cfg-toolbar-pos">
-                <option value="bottom" selected>bottom</option>
-                <option value="top">top</option>
-              </select>
-            </label>
-          </div>
-          <div class="demo-configurator-group">
-            <h4>Visibility</h4>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-grid" checked> <span>Grid</span></label>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-toolbar" checked> <span>Toolbar</span></label>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-rotate-slider" checked> <span>Rotate slider</span></label>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-zoom-slider" checked> <span>Zoom slider</span></label>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-shape-selector" checked> <span>Shape selector</span></label>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-rotate-btn" checked> <span>Rotate button</span></label>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-flip-btn" checked> <span>Flip button</span></label>
-          </div>
-          <div class="demo-configurator-group">
-            <h4>Behaviour</h4>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-keyboard" checked> <span>Keyboard</span></label>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-wheel-zoom" checked> <span>Wheel zoom</span></label>
-            <label class="demo-toggle"><input type="checkbox" id="cfg-bleed"> <span>Bleed margins</span></label>
-          </div>
-        </div>
-      </div>
-
-      <h2>Generated code</h2>
-      <div class="demo-code-wrap"><pre><code id="cfg-code" class="language-markup"></code></pre>
-        <button class="demo-copy-btn" data-copy-target="cfg-code" aria-label="Copy to clipboard">${ICONS.copy}</button>
-      </div>
     `,
   );
 }
@@ -1836,23 +1770,6 @@ function hydrateExampleShapes(root: HTMLElement): void {
     el.wheelZoom = false;
     el.showGrid = true;
   }
-}
-
-function hydrateExampleAspectRatios(root: HTMLElement): void {
-  const el = root.querySelector('#ex-aspect') as SfxCropElement | null;
-  if (!el) return;
-  // Property assignment has to precede `src` — `availableShapes` and
-  // `customAspectRatios` are consumed during the controller's first
-  // setup. Setting them after `src` would be honored (they're live-
-  // config keys), but the initial shape lookup for "Cinema" would miss.
-  el.customAspectRatios = [
-    { name: 'Cinema', ratio: 2.35 },
-    { name: 'Story',  ratio: 9 / 16 },
-  ];
-  el.availableShapes = ['free', '16:9', 'square', 'Cinema', 'Story'];
-  el.cropShape = 'Cinema';
-  el.src = DEMO_SRC;
-  el.showGrid = 'interaction';
 }
 
 function hydrateExampleInitialState(root: HTMLElement): void {
@@ -1909,6 +1826,10 @@ function hydrateExampleTransforms(root: HTMLElement): void {
   root.querySelector('#ex-rl')?.addEventListener('click', () => el.rotateLeft());
   root.querySelector('#ex-fh')?.addEventListener('click', () => el.flipHorizontal());
   root.querySelector('#ex-reset')?.addEventListener('click', () => el.reset());
+
+  // Secondary live demo on the same page — print-bleed guides.
+  const bleed = root.querySelector('#ex-bleed') as SfxCropElement | null;
+  if (bleed) { bleed.src = DEMO_SRC; bleed.showGrid = true; bleed.theme = 'light'; }
 }
 
 function hydrateExampleEvents(root: HTMLElement): void {
@@ -1956,83 +1877,20 @@ function hydrateExampleExport(root: HTMLElement): void {
   });
 }
 
-function hydrateExampleBleed(root: HTMLElement): void {
-  const el = root.querySelector('#ex-bleed') as SfxCropElement | null;
-  if (el) { el.src = DEMO_SRC; el.showGrid = true; el.theme = 'light'; }
-}
-
 function hydrateExampleTheming(root: HTMLElement): void {
   for (const el of root.querySelectorAll<SfxCropElement>('.ex-theme')) {
     el.src = DEMO_SRC;
-    el.showToolbar = false;
+    // Toolbar stays visible so the brand primary is also visible on the
+    // hover-ring / focus-ring of the toolbar buttons — without it, the
+    // only tinted surfaces are the frame + handles and the cards look
+    // nearly identical.
+    el.showToolbar = true;
+    el.showRotateSlider = false;
     el.showZoomSlider = false;
     el.keyboard = false;
     el.wheelZoom = false;
     el.theme = 'light';
   }
-}
-
-function hydrateExampleConfigurator(root: HTMLElement): void {
-  const viewer = root.querySelector('#cfg-viewer') as SfxCropElement | null;
-  if (!viewer) return;
-  viewer.src = DEMO_SRC;
-
-  const q = <T extends HTMLElement>(sel: string): T => root.querySelector<T>(sel)!;
-  const cfgShape   = q<HTMLSelectElement>('#cfg-crop-shape');
-  const cfgTheme   = q<HTMLSelectElement>('#cfg-theme');
-  const cfgPos     = q<HTMLSelectElement>('#cfg-toolbar-pos');
-  const cfgGrid    = q<HTMLInputElement>('#cfg-grid');
-  const cfgToolbar = q<HTMLInputElement>('#cfg-toolbar');
-  const cfgRotSl   = q<HTMLInputElement>('#cfg-rotate-slider');
-  const cfgZoomSl  = q<HTMLInputElement>('#cfg-zoom-slider');
-  const cfgShapeS  = q<HTMLInputElement>('#cfg-shape-selector');
-  const cfgRotBtn  = q<HTMLInputElement>('#cfg-rotate-btn');
-  const cfgFlipBtn = q<HTMLInputElement>('#cfg-flip-btn');
-  const cfgKb      = q<HTMLInputElement>('#cfg-keyboard');
-  const cfgWheel   = q<HTMLInputElement>('#cfg-wheel-zoom');
-  const cfgBleed   = q<HTMLInputElement>('#cfg-bleed');
-  const codeEl     = q<HTMLElement>('#cfg-code');
-
-  function apply(): void {
-    viewer!.cropShape = cfgShape.value as CropShapeName;
-    viewer!.theme = cfgTheme.value as 'light' | 'dark';
-    viewer!.toolbarPosition = cfgPos.value as 'top' | 'bottom';
-    viewer!.showGrid = cfgGrid.checked;
-    viewer!.showToolbar = cfgToolbar.checked;
-    viewer!.showRotateSlider = cfgRotSl.checked;
-    viewer!.showZoomSlider = cfgZoomSl.checked;
-    viewer!.showShapeSelector = cfgShapeS.checked;
-    viewer!.showRotateButton = cfgRotBtn.checked;
-    viewer!.showFlipButton = cfgFlipBtn.checked;
-    viewer!.keyboard = cfgKb.checked;
-    viewer!.wheelZoom = cfgWheel.checked;
-    viewer!.showBleedMargin = cfgBleed.checked;
-
-    const attrs: string[] = [`  src="/photo.jpg"`];
-    if (cfgShape.value !== 'free') attrs.push(`  crop-shape="${cfgShape.value}"`);
-    if (cfgTheme.value !== 'dark') attrs.push(`  theme="${cfgTheme.value}"`);
-    if (cfgPos.value !== 'bottom') attrs.push(`  toolbar-position="${cfgPos.value}"`);
-    if (!cfgGrid.checked) attrs.push(`  show-grid="false"`);
-    if (!cfgToolbar.checked) attrs.push(`  show-toolbar="false"`);
-    if (!cfgRotSl.checked) attrs.push(`  show-rotate-slider="false"`);
-    if (!cfgZoomSl.checked) attrs.push(`  show-zoom-slider="false"`);
-    if (!cfgShapeS.checked) attrs.push(`  show-shape-selector="false"`);
-    if (!cfgRotBtn.checked) attrs.push(`  show-rotate-button="false"`);
-    if (!cfgFlipBtn.checked) attrs.push(`  show-flip-button="false"`);
-    if (!cfgKb.checked) attrs.push(`  keyboard="false"`);
-    if (!cfgWheel.checked) attrs.push(`  wheel-zoom="false"`);
-    if (cfgBleed.checked) attrs.push(`  show-bleed-margin`);
-    codeEl.textContent = `<sfx-crop\n${attrs.join('\n')}\n></sfx-crop>`;
-    window.Prism?.highlightElement(codeEl);
-  }
-
-  const toggles: HTMLElement[] = [
-    cfgShape, cfgTheme, cfgPos,
-    cfgGrid, cfgToolbar, cfgRotSl, cfgZoomSl, cfgShapeS,
-    cfgRotBtn, cfgFlipBtn, cfgKb, cfgWheel, cfgBleed,
-  ];
-  for (const t of toggles) t.addEventListener('change', apply);
-  apply();
 }
 
 // ---------------------------------------------------------------------------
@@ -2055,16 +1913,13 @@ const PAGES: Record<string, PageDef> = {
 
   '/examples/basic':          { render: renderExampleBasic,          hydrate: hydrateExampleBasic },
   '/examples/shapes':         { render: renderExampleShapes,         hydrate: hydrateExampleShapes },
-  '/examples/aspect-ratios':  { render: renderExampleAspectRatios,   hydrate: hydrateExampleAspectRatios },
   '/examples/initial-state':  { render: renderExampleInitialState,   hydrate: hydrateExampleInitialState },
   '/examples/transforms':     { render: renderExampleTransforms,     hydrate: hydrateExampleTransforms },
   '/examples/events':         { render: renderExampleEvents,         hydrate: hydrateExampleEvents },
   '/examples/export':         { render: renderExampleExport,         hydrate: hydrateExampleExport },
   '/examples/custom-icons':   { render: renderExampleCustomIcons,    hydrate: hydrateExampleCustomIcons },
-  '/examples/bleed-margin':   { render: renderExampleBleed,          hydrate: hydrateExampleBleed },
   '/examples/theming':        { render: renderExampleTheming,        hydrate: hydrateExampleTheming },
   '/examples/react':          { render: renderExampleReact },
-  '/examples/configurator':   { render: renderExampleConfigurator,   hydrate: hydrateExampleConfigurator },
 };
 
 function currentPath(): string {
@@ -2185,6 +2040,20 @@ function navigate(): void {
       localStorage.setItem(THEME_KEY, next);
       applyThemeToWrap(wrap, next);
     });
+    // Keep the toggle pinned to the host's actual top-right corner.
+    // The wrap is full-width (definite measurement parent for the
+    // editor), but the host shrinks to image aspect inside, centered
+    // via margin:auto. CSS positions the button via `right: calc(
+    // (100% - var(--sfx-host-w)) / 2 + 12px)`, so we just publish the
+    // host's current pixel width as that custom property.
+    const host = wrap.querySelector<HTMLElement>('sfx-crop');
+    if (host) {
+      const sync = () => {
+        wrap.style.setProperty('--sfx-host-w', `${host.offsetWidth}px`);
+      };
+      new ResizeObserver(sync).observe(host);
+      sync();
+    }
   });
 }
 

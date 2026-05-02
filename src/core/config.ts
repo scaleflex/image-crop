@@ -29,7 +29,7 @@ export const DEFAULT_CONFIG: SfxCropConfig = {
   showShapeSelector: true,
   showRotateButton: true,
   showFlipButton: true,
-  toolbarPosition: 'bottom',
+  toolbarPosition: 'top',
   showToolbar: true,
   overlayColor: 'rgba(0, 0, 0, 0.55)',
   handleSize: 12,

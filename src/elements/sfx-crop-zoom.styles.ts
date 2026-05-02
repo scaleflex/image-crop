@@ -153,4 +153,49 @@ export const sfxCropZoomStyles = css`
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.2px;
   }
+
+  @media (max-width: 768px) {
+    /* Slimmer ruler + smaller readout on phones, mirroring the rotate
+       popover. Push the popover down toward the canvas bottom edge so
+       it doesn't sit in the middle of the photo. */
+    .sfx-cr-zoom-ruler { width: 220px; height: 22px; }
+    .sfx-cr-zoom-tick { height: 6px; margin-top: -3px; }
+    .sfx-cr-zoom-tick--major { height: 9px; margin-top: -4.5px; }
+    .sfx-cr-zoom-indicator {
+      top: calc(50% + 3px);
+      height: 12px;
+      width: 3px;
+      margin-left: -1.5px;
+    }
+    .sfx-cr-zoom-value { font-size: 12px; }
+    :host([open]) .sfx-cr-zoom-popover {
+      transform: translateX(-50%) translateY(24px) scale(1);
+    }
+  }
+  @media (max-width: 480px) {
+    .sfx-cr-zoom-ruler { width: 180px; height: 20px; }
+    .sfx-cr-zoom-tick { height: 5px; margin-top: -2.5px; }
+    .sfx-cr-zoom-tick--major { height: 8px; margin-top: -4px; }
+    .sfx-cr-zoom-indicator {
+      top: calc(50% + 2px);
+      height: 10px;
+    }
+    .sfx-cr-zoom-value { font-size: 11px; }
+    :host([open]) .sfx-cr-zoom-popover {
+      transform: translateX(-50%) translateY(30px) scale(1);
+    }
+  }
+
+  /* Narrow editor — match the compact 30×30 trigger sizing of the
+     rest of the vertical left-rail toolbar. */
+  @media (max-width: 600px) {
+    .sfx-cr-zoom-trigger {
+      width: 30px;
+      height: 30px;
+    }
+    .sfx-cr-zoom-trigger svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
 `;

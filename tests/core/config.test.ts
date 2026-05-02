@@ -15,7 +15,7 @@ describe('DEFAULT_CONFIG', () => {
     expect(DEFAULT_CONFIG.showShapeSelector).toBe(true);
     expect(DEFAULT_CONFIG.showRotateButton).toBe(true);
     expect(DEFAULT_CONFIG.showFlipButton).toBe(true);
-    expect(DEFAULT_CONFIG.toolbarPosition).toBe('bottom');
+    expect(DEFAULT_CONFIG.toolbarPosition).toBe('top');
     expect(DEFAULT_CONFIG.overlayColor).toBe('rgba(0, 0, 0, 0.55)');
     expect(DEFAULT_CONFIG.handleSize).toBe(12);
     expect(DEFAULT_CONFIG.handleColor).toBe('#ffffff');

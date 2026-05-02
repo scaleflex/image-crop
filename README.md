@@ -44,9 +44,8 @@ pnpm add @scaleflex/crop
 ## CDN
 
 ```html
-<script type="module">
-  import '@scaleflex/crop/define';
-</script>
+<script type="module"
+        src="https://cdn.jsdelivr.net/npm/@scaleflex/crop/dist/define.js"></script>
 ```
 
 ## Package exports
@@ -55,7 +54,7 @@ pnpm add @scaleflex/crop
 |---|---|
 | `@scaleflex/crop`         | Side-effect-free entry. Exports `SfxCropElement`, `createCropController`, `mergeConfig`, `DEFAULT_CONFIG`, and all public types. |
 | `@scaleflex/crop/define`  | Side-effectful — registers the `<sfx-crop>` custom element. Import once at bootstrap. |
-| `@scaleflex/crop/react`   | React component `<SfxCrop>` plus `useSfxCrop` and `useSfxCropController` hooks. |
+| `@scaleflex/crop/react`   | React component `<SfxCrop>`, `useSfxCrop` / `useSfxCropController` hooks, plus re-exports of `createCropController`, `mergeConfig`, `DEFAULT_CONFIG`, and the public types. |
 
 # Quick Start
 
@@ -123,7 +122,7 @@ All options below are exposed as both HTML attributes (kebab-case) and DOM prope
 |---|---|---|---|
 | `src`             | `string`                | `''`        | Image URL to load. Setting after mount triggers a re-load. |
 | `crop-shape` / `cropShape` | `CropShapeName` | `'16:9'` | Built-in preset or any `"W:H"` ratio string. |
-| `available-shapes` / `availableShapes` | `CropShapeName[] \| string` | full preset set | Restricts the shape palette in the toolbar. JSON-stringified array works as an attribute. |
+| `available-shapes` / `availableShapes` | `CropShapeName[] \| string` | `['free','square','16:9','4:3','3:2','5:4','2:1','9:16','3:4','2:3','4:5','1:2']` | Restricts the shape palette in the toolbar. JSON-stringified array works as an attribute. `circle` and `rounded-rect` are valid built-ins but omitted from the default — pass them explicitly to enable. |
 | `initial-crop` / `initialCrop` | `CropRect \| string \| null` | `null` | Starting crop rect in normalised `[0,1]` image coords. |
 | `initial-rotation` / `initialRotation` | `number` | `0`  | Starting fine rotation, degrees. |
 | `initial-scale`    / `initialScale`    | `number` | `1`  | Starting zoom level. |

@@ -24,10 +24,12 @@ export const sfxCropToolbarStyles = css`
     bottom: 16px;
   }
 
-  .sfx-cr-toolbar {
-    pointer-events: auto;
-  }
-
+  /* Hole-punch pattern: the toolbar host is pointer-transparent and
+     individual interactive children below opt back in. Gaps between
+     buttons fall through to the canvas — important when a crop handle
+     ends up under the floating toolbar and the user wants to grab it.
+     The rotate / zoom / shapes sub-elements already follow the same
+     pattern in their own stylesheets. */
   .sfx-cr-toolbar {
     display: flex;
     flex-direction: row;
@@ -39,6 +41,7 @@ export const sfxCropToolbarStyles = css`
     border: none;
     border-radius: 0;
     box-shadow: none;
+    pointer-events: none;
   }
 
   .sfx-cr-toolbar-group {
@@ -48,7 +51,17 @@ export const sfxCropToolbarStyles = css`
     gap: 10px;
   }
 
+  /* Sub-element hosts — same hole-punch opt-in as the plain buttons.
+     Their hosts are tight inline-flex wrappers around a single trigger,
+     so re-enabling them adds no extra dead zone. */
+  sfx-crop-rotate,
+  sfx-crop-zoom,
+  sfx-crop-shapes {
+    pointer-events: auto;
+  }
+
   .sfx-cr-toolbar-btn {
+    pointer-events: auto;
     width: 52px;
     height: 36px;
     display: flex;
@@ -105,6 +118,7 @@ export const sfxCropToolbarStyles = css`
      before every other control so the user can wipe back to the initial
      state in one click. */
   .sfx-cr-reset-btn {
+    pointer-events: auto;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -168,43 +182,55 @@ export const sfxCropToolbarStyles = css`
 
   /* Narrow editor (component itself is small, regardless of viewport):
      stack the toolbar vertically along the LEFT edge, icons only.
-     The "Reset" label and the shape-trigger label collapse so every
-     control fits in the same 36×36 capsule footprint. */
-  @container sfxcrop (max-width: 600px) {
+     Tucked tight against the edge with a compact 30×30 footprint so
+     the photo behind keeps maximum breathing room. */
+  @media (max-width: 600px) {
     :host {
-      top: 12px;
-      bottom: 12px;
-      left: 12px;
+      top: 8px;
+      bottom: 8px;
+      left: 4px;
       right: auto;
       justify-content: flex-start;
-      align-items: flex-start;
+      /* Cross-axis centers the stacked button column vertically inside
+         the full-height host strip — toolbar floats in the middle of
+         the photo regardless of its content height. */
+      align-items: center;
     }
     :host([toolbar-position="bottom"]) {
-      top: 12px;
-      bottom: 12px;
+      top: 8px;
+      bottom: 8px;
     }
     .sfx-cr-toolbar {
       flex-direction: column;
       flex-wrap: nowrap;
       align-items: center;
       justify-content: flex-start;
-      gap: 8px;
-      padding: 6px 4px;
+      gap: 4px;
+      padding: 3px;
     }
     .sfx-cr-toolbar-group {
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
     .sfx-cr-toolbar-btn {
-      width: 40px;
-      height: 36px;
+      width: 30px;
+      height: 30px;
+    }
+    .sfx-cr-toolbar-btn svg {
+      width: 16px;
+      height: 16px;
     }
     .sfx-cr-reset-btn {
-      width: 40px;
+      width: 30px;
+      height: 30px;
       min-width: 0;
       padding: 0;
       gap: 0;
       justify-content: center;
+    }
+    .sfx-cr-reset-btn svg {
+      width: 16px;
+      height: 16px;
     }
     .sfx-cr-reset-btn span {
       display: none;

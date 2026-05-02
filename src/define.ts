@@ -1,12 +1,13 @@
 /**
  * Side-effect entry for `@scaleflex/crop/define`.
  *
- * Importing this module registers all public custom elements:
- *   - <sfx-crop>
- *
- * Later phases will grow this list to also register:
- *   - <sfx-crop-canvas>, <sfx-crop-toolbar>, <sfx-crop-zoom>,
- *     <sfx-crop-rotate>, <sfx-crop-shapes>
+ * Importing this module registers all six public custom elements:
+ *   - <sfx-crop>          — main editor host
+ *   - <sfx-crop-canvas>   — stable <canvas> host inside the shadow root
+ *   - <sfx-crop-toolbar>  — action bar (rotate/flip/sliders/shape selector)
+ *   - <sfx-crop-zoom>     — zoom slider popover
+ *   - <sfx-crop-rotate>   — fine-rotation slider popover
+ *   - <sfx-crop-shapes>   — shape preset dropdown
  *
  * The import is idempotent — repeated imports and React StrictMode double
  * mounts won't throw, thanks to the `safeDefine` guard used by each element.

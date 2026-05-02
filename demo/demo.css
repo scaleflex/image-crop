@@ -222,20 +222,35 @@ kbd {
 /* Double-class selector bumps specificity above `.demo-card--lg` which
    would otherwise win on tie + source-order and keep its margin/padding. */
 .demo-card.demo-crop-wrap {
+  /* Definite-width block wrap so <sfx-crop>'s fitHostToImage gets a
+     stable parent measurement. The host shrinks to image-aspect inside;
+     the wrap stays full-width but is transparent — only the host's
+     internal .sfx-cr-container paints the visible card frame, so no
+     gray bars appear in the leftover horizontal space. */
   position: relative;
-  width: fit-content;
-  max-width: 100%;
-  min-width: 320px;
-  min-height: 320px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 1200px;
+  margin: 32px auto 0;
   padding: 0;
-  border-radius: 12px;
+  /* The crop editor itself ships its own border + shadow + radius now —
+     drop the .demo-card frame here so we don't end up with two stacked
+     rounded plates / doubled borders at the corners. */
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .demo-theme-toggle {
+  /* Pinned to the editor host's top-right corner. The wrap is wider
+     than the host (full-width vs image-aspect, centered via margin:auto),
+     so we offset by half the leftover horizontal space. JS keeps
+     `--sfx-host-w` in sync with the host's pixel width via a
+     ResizeObserver. Falls back to 100% (= wrap edge) before JS runs. */
   position: absolute;
   top: 12px;
-  right: 12px;
+  right: calc((100% - var(--sfx-host-w, 100%)) / 2 + 12px);
   z-index: 6;
   display: inline-flex;
   align-items: center;
@@ -1287,6 +1302,19 @@ kbd {
   padding-left: 2px;
 }
 
+/* Highlight variant: primary-tinted ring + glow + accent label.
+   Used when a single live demo is the focus of the section. */
+.demo-example-cell--highlight {
+  background: linear-gradient(180deg, rgba(21, 91, 205, 0.06), rgba(21, 91, 205, 0.02));
+  border: 1px solid rgba(21, 91, 205, 0.45);
+  box-shadow:
+    0 0 0 4px rgba(21, 91, 205, 0.08),
+    0 12px 32px rgba(21, 91, 205, 0.12);
+}
+.demo-example-cell--highlight .demo-example-cell-label {
+  color: var(--sf-primary);
+}
+
 .demo-example-controls {
   display: flex;
   flex-wrap: wrap;
@@ -1321,67 +1349,11 @@ kbd {
 }
 .demo-example-log > div:nth-child(1) { color: var(--sf-accent-teal); }
 
-.demo-configurator {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 24px;
-  margin: 24px 0 32px;
-}
-.demo-configurator-preview {
-  background: var(--sf-section-bg);
-  border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius);
-  padding: 16px;
-}
-.demo-configurator-panel {
-  background: var(--sf-bg);
-  border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  max-height: 600px;
-  overflow-y: auto;
-}
-.demo-configurator-group h4 {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--sf-text-muted);
-  margin: 0 0 12px;
-}
-.demo-configurator-group label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--sf-text);
-  margin-bottom: 10px;
-}
-.demo-configurator-group select {
-  flex: 1;
-  height: 34px;
-  padding: 0 10px;
-  font-family: inherit;
-  font-size: 13px;
-  color: var(--sf-text);
-  background: var(--sf-section-bg);
-  border: 1px solid var(--sf-border);
-  border-radius: 6px;
-  cursor: pointer;
-}
-.demo-toggle { cursor: pointer; }
-.demo-toggle input[type="checkbox"] { accent-color: var(--sf-primary); }
-
 /* ======================================================================
  *  Responsive
  * ==================================================================== */
 
 @media (max-width: 1024px) {
-  .demo-configurator { grid-template-columns: 1fr; }
   .demo-footer-main { grid-template-columns: 1fr 1fr; }
 }
 

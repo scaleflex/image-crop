@@ -32,14 +32,17 @@ export const sfxCropStyles = css`
     height: 100%;
     background: var(--sfx-cr-bg);
     border-radius: var(--sfx-cr-radius);
+    /* Editor card frame: shadow-only (no border). A border draws two
+       visible curves at the corners (outer + inner padding edge),
+       reading as a "double ring"; a slightly stronger shadow gives the
+       same elevation feel with a single clean rounded silhouette. */
+    box-shadow:
+      0 0 0 1px rgba(15, 23, 42, 0.06),
+      0 4px 12px rgba(15, 23, 42, 0.06),
+      0 16px 40px rgba(15, 23, 42, 0.08);
     font-family: var(--sfx-cr-font);
     user-select: none;
     -webkit-user-select: none;
-    /* Inline-size container so toolbar/shape sub-elements can switch to
-       a compact icon-only layout when the editor itself is narrow,
-       independent of the page viewport. */
-    container-type: inline-size;
-    container-name: sfxcrop;
   }
 
   /* ====== Loading ====== */

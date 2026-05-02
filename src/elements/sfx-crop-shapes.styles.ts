@@ -222,29 +222,64 @@ export const sfxCropShapesStyles = css`
   .sfx-cr-shape-option--active .sfx-cr-shape-option-icon { color: var(--sfx-cr-primary); }
 
   @media (max-width: 768px) {
-    .sfx-cr-shape-trigger-label { display: none; }
-    .sfx-cr-shape-trigger { min-width: 0; padding: 8px 10px; }
-  }
-
-  /* Narrow editor: drop the textual label + chevron so the trigger
-     reduces to an icon-only capsule that matches the rest of the
-     left-rail toolbar buttons. Anchor the dropdown to the left edge
-     since the trigger now lives in the left column. */
-  @container sfxcrop (max-width: 600px) {
+    /* Drop label + chevron and shrink to a square icon-only pill so
+       the shape icon sits dead-center. The base 84px min-width was
+       sized for the desktop "[icon] Aspect 16:9 ▾" layout and leaves
+       empty pill space on the right once those pieces are hidden. */
     .sfx-cr-shape-trigger-label { display: none; }
     .sfx-cr-shape-chevron { display: none; }
     .sfx-cr-shape-trigger {
       min-width: 0;
-      width: 40px;
-      height: 36px;
+      width: 36px;
       padding: 0;
       gap: 0;
       justify-content: center;
     }
+  }
+
+  /* Narrow editor: drop the textual label + chevron so the trigger
+     reduces to an icon-only 30×30 capsule that matches the rest of
+     the compact left-rail toolbar. Anchor the dropdown to the left
+     edge since the trigger now lives in the left column. */
+  @media (max-width: 600px) {
+    .sfx-cr-shape-trigger-label { display: none; }
+    .sfx-cr-shape-chevron { display: none; }
+    .sfx-cr-shape-trigger {
+      min-width: 0;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      gap: 0;
+      justify-content: center;
+    }
+    /* Shrink the icon SLOT (not just the SVG) and center its contents,
+       so the 16×16 SVG sits dead-center inside the 30×30 trigger. The
+       base .sfx-cr-shape-trigger-icon is 20×20 with display:flex but
+       no justify/align — leaving a 16×16 SVG inside top-left aligned. */
+    .sfx-cr-shape-trigger-icon {
+      width: 16px;
+      height: 16px;
+      align-items: center;
+      justify-content: center;
+    }
+    .sfx-cr-shape-trigger svg {
+      width: 16px;
+      height: 16px;
+    }
+    /* Trigger sits at the bottom of the vertical left-rail toolbar.
+       Anchor the dropdown's bottom *below* the trigger so the panel
+       drops lower into the canvas instead of overflowing the top
+       edge — the menu is tall and there's more vertical room below
+       the trigger's vertical center than above it. */
     .sfx-cr-shape-dropdown {
       right: auto;
-      left: calc(100% + 8px);
-      top: 0;
+      left: calc(100% + 6px);
+      top: auto;
+      bottom: -30px;
+      transform: translateY(6px) scale(0.96);
+    }
+    :host([open]) .sfx-cr-shape-dropdown {
+      transform: translateY(0) scale(1);
     }
   }
 `;

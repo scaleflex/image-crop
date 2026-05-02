@@ -51,9 +51,10 @@ packaging mirror the sibling Scaleflex packages `@scaleflex/uploader` and
 |------|-------------|
 | **Rotation Left** | Rotate image 90° counter-clockwise |
 | **Flip Horizontal** | Mirror image horizontally |
-| **Crop Shape** | Select crop shape: free, square, circle, 16:9, 4:3, 3:2 |
+| **Crop Shape** | Select crop shape: built-ins (`free`, `square`, `circle`, `rounded-rect`) or aspect ratios (`16:9`, `4:3`, `3:2`, `5:4`, `2:1`, `9:16`, `3:4`, `2:3`, `4:5`, `1:2`); any ad-hoc `"W:H"` string also accepted |
 | **Rotation Slider** | Fine rotation -45° to +45° with snap-to-zero |
 | **Scale/Zoom** | Zoom slider + mouse wheel + pinch gesture |
+| **Icon overrides** | Per-slot SVG override map (`CropIconOverrides`) for every toolbar icon |
 
 ---
 
@@ -323,14 +324,15 @@ Note: When image is rotated, cursor angles adjust to match the rotation.
 - Success: green checkmark toast (auto-dismiss 2s)
 - Error: red toast with message (auto-dismiss 5s)
 
-#### Empty State (no image)
-- Canvas shows: dashed border + "Drop image here or click to upload" text
-- Upload icon centered, 48×48px, `rgba(255,255,255,0.3)`
-- Toolbar hidden or disabled
+#### Empty State (no `src` set)
+- Canvas host renders blank inside the container — the editor expects an
+  upstream upload UI to set `src`. There is no built-in drop zone or file
+  picker.
 
 #### Error State (image failed to load)
-- Canvas shows: error icon + "Failed to load image" text
-- Retry button centered
+- A `::part(error)` overlay shows the failure message ("Failed to load
+  image" by default, or the underlying `Error.message`). No retry button —
+  consumers retry by re-setting `src` or calling `loadImage(src)`.
 
 ### 2.10 Responsive Behavior
 
@@ -379,6 +381,14 @@ Touch targets: All interactive elements have minimum `44×44px` touch area.
 
 All animations are driven by a spring/lerp system in the render loop, not CSS transitions.
 This gives complete frame-level control and avoids layout thrashing.
+
+> **Implementation status.** §3.1 (engine), §3.2 (smooth 90° rotate spring),
+> §3.4 (zoom inertia + elastic bounce at min/max — see `canvas/renderer.ts`
+> `bounceVelocity`), §3.5 (morph crop shape), §3.6 (fade grid), and §3.11
+> (reduced motion) are shipped. §3.3 (3D flip with brightness flash), §3.7
+> (parallax shift), §3.8 (handle bounce + glow ring), §3.9 (toolbar entry/exit),
+> §3.10 (shutter overlay flash, success/error toasts, dropdown stagger,
+> rotation-snap pulse) are design intent — partially or not yet implemented.
 
 ### 3.1 Animation Engine
 
@@ -583,19 +593,25 @@ Every configuration value has a kebab-case attribute on `<sfx-crop>`. Notable:
 | Attribute | Type | Default |
 |---|---|---|
 | `src` | URL string | `""` |
-| `crop-shape` | `free \| square \| circle \| rounded-rect \| 16:9 \| 4:3 \| 3:2 \| 2:3 \| 3:4 \| 9:16` | `free` |
-| `theme` | `light \| dark` | `dark` |
+| `crop-shape` | built-in (`free`, `square`, `circle`, `rounded-rect`, `16:9`, `4:3`, `3:2`, `5:4`, `2:1`, `9:16`, `3:4`, `2:3`, `4:5`, `1:2`) or any `"W:H"` string | `16:9` |
+| `theme` | `light \| dark` | `light` |
 | `show-grid` | `true \| false \| interaction` | `interaction` |
 | `min-scale`, `max-scale` | number | `0.5`, `5` |
 | `min-crop-size` | px | `20` |
-| `available-shapes` | JSON array or CSV string | full preset list |
+| `handle-size` | px | `12` |
+| `available-shapes` | JSON array or CSV string | `['free','square','16:9','4:3','3:2','5:4','2:1','9:16','3:4','2:3','4:5','1:2']` |
+| `initial-crop` | `CropRect` (JSON) or property | `null` |
+| `initial-rotation`, `initial-scale` | number | `0`, `1` |
 | `show-toolbar`, `show-rotate-button`, `show-flip-button`, `show-rotate-slider`, `show-shape-selector`, `show-zoom-slider` | boolean | `true` |
-| `toolbar-position` | `top \| bottom` | `bottom` |
+| `toolbar-position` | `top \| bottom` | `top` |
 | `border-radius` | px | `20` |
-| `overlay-color`, `handle-color`, `bleed-margin-color` | CSS color | — |
+| `overlay-color`, `handle-color`, `bleed-margin-color` | CSS color | `rgba(0,0,0,0.55)`, `#ffffff`, `rgba(255,0,0,0.5)` |
 | `show-bleed-margin`, `bleed-margin-size` | boolean, px | `false`, `10` |
+| `output-type`, `output-quality` | string (MIME), number 0-1 | `image/png`, `0.92` |
+| `max-output-width`, `max-output-height` | px (`0` = original) | `0`, `0` |
 | `enable-animations`, `animation-speed` | boolean, number | `true`, `1.0` |
 | `keyboard`, `pinch-zoom`, `wheel-zoom` | boolean | `true` |
+| `icons` (property only) | `CropIconOverrides` (per-slot SVG strings) | `{}` |
 
 ### 5.3 Imperative methods (on the element)
 
@@ -636,8 +652,12 @@ interface SfxCropElement extends HTMLElement {
 | `sfx-crop-cancel` | `void` |
 | `sfx-crop-error` | `{ error: Error }` |
 
-Internal sub-element events the host routes through `sfx-crop-toolbar-command`:
-`sfx-crop-rotate-change`, `sfx-crop-shape-change`, `sfx-crop-zoom-change`.
+Internal sub-element events (not part of the public API; the host listens for
+them on `<sfx-crop-toolbar>` and translates them into controller calls):
+- `sfx-crop-toolbar-command` — discriminated union over `reset` / `rotate-left` /
+  `flip-h` / `rotation` / `scale` / `shape`.
+- `sfx-crop-rotate-active` — `{ active: boolean }` to drive the
+  `setRotationMode(active)` interaction state.
 
 ### 5.5 Types
 
@@ -655,6 +675,9 @@ interface TransformState {
   panX: number;
   panY: number;
   cropRect: NormalizedRect;
+  /** Pivot for fine-rotation, in normalized image-space. Captured when the
+   *  user tilts away from 0°; cleared on reset to 0°. */
+  rotationPivot?: { x: number; y: number };
 }
 
 interface NormalizedRect { x: number; y: number; width: number; height: number; }
@@ -665,38 +688,79 @@ interface TransformParams {
   outputWidth: number; outputHeight: number;
 }
 
-type CropShapeName =
+type CropShapeBuiltin =
   | 'free' | 'square' | 'circle' | 'rounded-rect'
-  | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3';
+  | '16:9' | '4:3' | '3:2' | '5:4' | '2:1'
+  | '9:16' | '3:4' | '2:3' | '4:5' | '1:2';
+
+// Widened with `(string & {})` so consumers can pass any free-form
+// `"W:H"` string while still getting autocomplete on the built-ins.
+type CropShapeName = CropShapeBuiltin | (string & {});
 
 type HandlePosition = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
 
-interface HitTarget { type: 'handle' | 'crop-area' | 'outside' | 'none'; position?: HandlePosition; }
+interface HitTarget {
+  type: 'handle' | 'crop-area' | 'move-handle' | 'outside' | 'none';
+  position?: HandlePosition;
+}
 interface Point { x: number; y: number; }
 interface Size { width: number; height: number; }
+
+// Per-slot icon overrides; values are raw SVG strings injected via
+// unsafeHTML — same trust model as the built-in icons. Any omitted slot
+// keeps the default.
+type CropIconOverrides = Partial<{
+  rotateLeft: string; flipHorizontal: string; tilt: string;
+  loupe: string; zoomIn: string; zoomOut: string;
+  cropAspect: string; cropCustom: string; cropCircle: string; cropRoundedRect: string;
+  orientLandscape: string; orientPortrait: string;
+  chevronDown: string; reset: string;
+}>;
 ```
 
 ### 5.6 React binding (`@scaleflex/crop/react`)
 
-```tsx
-import { SfxCrop, useSfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+Three tiers, all exported from the same entry:
 
-// Declarative
+```tsx
+import {
+  SfxCrop,                  // forwardRef component (built-in toolbar)
+  useSfxCrop,               // hook around the same custom element
+  useSfxCropController,     // headless controller hook (consumer-owned canvas)
+  createCropController,     // raw factory re-exported for convenience
+  DEFAULT_CONFIG,
+  mergeConfig,
+  type SfxCropElement,
+  type SfxCropProps,
+  type SfxCropSaveDetail,
+} from '@scaleflex/crop/react';
+
+// 1) Declarative component
 const ref = useRef<SfxCropElement>(null);
 <SfxCrop
   ref={ref}
   src="/photo.jpg"
-  cropShape="free"
-  theme="dark"
+  cropShape="16:9"
+  theme="light"
   onChange={(state) => ...}
   onSave={({ blob, params }) => ...}
 />
 
-// Imperative (hook)
+// 2) Imperative hook (same UI, ref-based access)
 const crop = useSfxCrop();
 <sfx-crop ref={crop.ref} src="/photo.jpg" />;
 await crop.save();
+
+// 3) Headless — render your own canvas + UI
+const { canvasRef, state, actions, api } = useSfxCropController({
+  src: '/photo.jpg', cropShape: '16:9',
+});
+<canvas ref={canvasRef} />;
 ```
+
+The headless hook returns `{ canvasRef, ready, state, actions, api }` — see
+`CropControllerState`, `CropControllerActions`, `CropControllerApi` in
+`src/react/use-sfx-crop-controller.ts`.
 
 ---
 
@@ -715,17 +779,17 @@ interface SfxCropConfig {
   initialScale?: number;
 
   // Crop constraints
-  cropShape: CropShapeName;          // Default: 'free'
+  cropShape: CropShapeName;          // Default: '16:9'
   customAspectRatios?: Array<{ name: string; ratio: number }>;
   minCropSize: number;               // Min pixels, default: 20
-  availableShapes: CropShapeName[];  // Default: ['free','square','circle','rounded-rect','16:9','4:3','3:2']
+  availableShapes: CropShapeName[];  // Default: ['free','square','16:9','4:3','3:2','5:4','2:1','9:16','3:4','2:3','4:5','1:2']
 
   // Scale constraints
   minScale: number;                  // Default: 0.5
   maxScale: number;                  // Default: 5
 
   // Theme
-  theme: 'light' | 'dark';           // Default: 'dark'
+  theme: 'light' | 'dark';           // Default: 'light'
 
   // UI toggles
   showGrid: boolean | 'interaction'; // Default: 'interaction'
@@ -734,7 +798,7 @@ interface SfxCropConfig {
   showShapeSelector: boolean;        // Default: true
   showRotateButton: boolean;         // Default: true
   showFlipButton: boolean;           // Default: true
-  toolbarPosition: 'bottom' | 'top'; // Default: 'bottom'
+  toolbarPosition: 'bottom' | 'top'; // Default: 'top'
   showToolbar: boolean;              // Default: true
 
   // Overlay / handles
@@ -791,31 +855,57 @@ Booleans accept presence-shorthand (`<sfx-crop show-toolbar>`), `"true"`, or
 
 ### 6.3 Default Configuration
 
+Mirrors `src/core/config.ts:DEFAULT_CONFIG`. The `<sfx-crop>` element's
+`@property` declarations re-use the same defaults, so headless and custom
+element consumers see identical behaviour.
+
 ```typescript
 const DEFAULT_CONFIG: SfxCropConfig = {
   src: '',
-  cropShape: 'free',
+  cropShape: '16:9',
+  initialCrop: null,
+  initialRotation: 0,
+  initialScale: 1,
+  customAspectRatios: [],
   minCropSize: 20,
+  availableShapes: [
+    'free', 'square',
+    '16:9', '4:3', '3:2', '5:4', '2:1',
+    '9:16', '3:4', '2:3', '4:5', '1:2',
+  ],
   minScale: 0.5,
   maxScale: 5,
-  theme: 'dark',
+  theme: 'light',
   showGrid: 'interaction',
   showRotateSlider: true,
   showZoomSlider: true,
   showShapeSelector: true,
   showRotateButton: true,
   showFlipButton: true,
-  availableShapes: ['free', 'square', 'circle', '16:9', '4:3', '3:2'],
-  toolbarPosition: 'bottom',
+  toolbarPosition: 'top',
+  showToolbar: true,
   overlayColor: 'rgba(0, 0, 0, 0.55)',
   handleSize: 12,
   handleColor: '#ffffff',
+  borderRadius: 20,
   outputType: 'image/png',
   outputQuality: 0.92,
+  maxOutputWidth: 0,
+  maxOutputHeight: 0,
+  showBleedMargin: false,
+  bleedMarginSize: 10,
+  bleedMarginColor: 'rgba(255, 0, 0, 0.5)',
   enableAnimations: true,
   animationSpeed: 1.0,
+  keyboard: true,
+  pinchZoom: true,
+  wheelZoom: true,
 };
 ```
+
+> The `icons` (`CropIconOverrides`) override map is exposed only on the
+> `<sfx-crop>` element / React props — it is not part of `SfxCropConfig`
+> because the headless `createCropController` has no toolbar to skin.
 
 ---
 
@@ -1078,9 +1168,8 @@ toTransformParams(): {
 │   └── vite.demo.config.ts        # Demo dev server
 ├── demo/
 │   ├── index.html
-│   ├── demo.ts
-│   ├── demo.css
-│   └── configurator.ts
+│   ├── demo.ts                    # hash-router SPA showcasing every config
+│   └── demo.css
 ├── src/
 │   ├── index.ts                   # pure types + helpers (no side effects)
 │   ├── define.ts                  # side-effect entry — safeDefine all six tags
@@ -1103,12 +1192,12 @@ toTransformParams(): {
 │   │   └── sfx-crop-shapes.styles.ts
 │   ├── core/
 │   │   ├── crop-controller.ts     # pure factory — state/renderer/pointer/keyboard wiring
-│   │   ├── config.ts              # DEFAULT_CONFIG, mergeConfig, validateConfig
+│   │   ├── config.ts              # DEFAULT_CONFIG, mergeConfig, validateConfig, TOOLBAR_RESERVE_PX
 │   │   └── types.ts               # SfxCropConfig + TransformState + CropRect + ...
 │   ├── canvas/                    # unchanged: renderer + layers + hit-test
 │   ├── transforms/                # unchanged: pure state + matrix + constrain
 │   ├── interactions/              # unchanged: pointer-tracker + drag + resize + pinch + wheel
-│   ├── animation/                 # unchanged: spring + lerp
+│   ├── animation/                 # spring.ts + lerp.ts
 │   ├── export/                    # unchanged: exporter
 │   ├── a11y/
 │   │   ├── keyboard.ts            # attached to host (tabindex=0 via setupAria)
@@ -1120,8 +1209,9 @@ toTransformParams(): {
 │   │   └── shared.css.ts          # designTokens + baseStyles + keyframes + sliderThumbStyles
 │   └── react/
 │       ├── index.ts
-│       ├── sfx-crop.tsx           # SfxCrop (forwardRef) + event bridge
-│       └── use-sfx-crop.ts        # useSfxCrop() hook variant
+│       ├── sfx-crop.tsx                  # SfxCrop (forwardRef) + event bridge
+│       ├── use-sfx-crop.ts               # useSfxCrop() — hook around the custom element
+│       └── use-sfx-crop-controller.ts    # useSfxCropController() — headless controller
 └── tests/
     ├── setup.ts                   # DOMMatrix + ResizeObserver polyfills
     ├── canvas/hit-test.test.ts
@@ -1156,8 +1246,8 @@ Scaleflex packages.
 **CDN (ESM):**
 ```html
 <script type="module"
-        src="https://esm.sh/@scaleflex/crop/define"></script>
-<sfx-crop src="/photos/landscape.jpg" crop-shape="16:9" theme="dark"></sfx-crop>
+        src="https://cdn.jsdelivr.net/npm/@scaleflex/crop/dist/define.js"></script>
+<sfx-crop src="/photos/landscape.jpg" crop-shape="16:9" theme="light"></sfx-crop>
 ```
 
 **ESM:**
@@ -1185,7 +1275,7 @@ function App() {
       ref={ref}
       src="/photos/landscape.jpg"
       cropShape="16:9"
-      theme="dark"
+      theme="light"
       onChange={(state) => console.log(state)}
     />
   );

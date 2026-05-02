@@ -55,7 +55,7 @@ const SHOW_GRID_CONVERTER = {
  *   - `sfx-crop-error`        `{ error }`
  *
  * Theme via `--sfx-cr-*` custom properties set on the host, or via
- * `::part(canvas-host|toolbar|zoom|loading|error|container)` from light DOM.
+ * `::part(container|canvas-host|toolbar|loading|error)` from light DOM.
  */
 export class SfxCropElement extends SfxCropBaseElement {
   static styles = [designTokens, baseStyles, spinKeyframes, sfxCropStyles];
@@ -362,14 +362,33 @@ export class SfxCropElement extends SfxCropBaseElement {
     let maxH = parseMax(hostStyle.maxHeight);
 
     const parent = this.parentElement;
-    if (!Number.isFinite(maxW)) {
-      const w = parent?.clientWidth;
-      maxW = w && w > 0 ? w : window.innerWidth;
-    }
-    if (!Number.isFinite(maxH)) {
-      const h = parent?.clientHeight;
-      maxH = h && h > 0 ? h : window.innerHeight;
-    }
+    // `clientWidth` returns the padding-box width — laying out a child
+    // against that overruns the parent's content-box by 2×padding and
+    // causes the crop to overflow containers like cards/cells. Subtract
+    // the parent's own padding so we measure the content area instead.
+    const parentInnerWidth = (): number => {
+      if (!parent) return 0;
+      const ps = getComputedStyle(parent);
+      const raw = parent.clientWidth;
+      return Math.max(0, raw - (parseFloat(ps.paddingLeft) || 0) - (parseFloat(ps.paddingRight) || 0));
+    };
+    // Width: the parent is almost always horizontally definite (block
+    // flow follows its container), so parent.clientWidth reflects the
+    // available space. Cap by it even when CSS max-width is set —
+    // otherwise a desktop-sized cap leaks past a narrow mobile viewport
+    // and the photo overflows the container.
+    const parentW = parentInnerWidth();
+    if (parentW > 0) maxW = Math.min(maxW, parentW);
+    else if (!Number.isFinite(maxW)) maxW = window.innerWidth;
+    // Height: do NOT clamp by parent.clientHeight. Parents in this
+    // component are almost always `height: auto`, in which case their
+    // clientHeight echoes our own previous content height — including
+    // the canvas's stale inline style.height from the last fit. That
+    // creates a one-way shrink loop: wrap shrinks → host shrinks → on
+    // growth, parentH still reads the small previous value → host
+    // stays small. Trust the consumer's CSS max-height (or fall back
+    // to viewport height) instead.
+    if (!Number.isFinite(maxH)) maxH = window.innerHeight;
 
     this.style.width = savedW;
     this.style.height = savedH;
@@ -385,12 +404,12 @@ export class SfxCropElement extends SfxCropBaseElement {
     const displayW = Math.floor(effW * fit);
     const displayH = Math.floor(effH * fit);
 
-    // Size both the canvas host and the outer host to the photo rect —
-    // toolbars float inside on top via `position: absolute`.
-    const canvasStyle = this.canvasHost.style;
-    if (canvasStyle.width !== `${displayW}px`) canvasStyle.width = `${displayW}px`;
-    if (canvasStyle.height !== `${displayH}px`) canvasStyle.height = `${displayH}px`;
-
+    // Size only the outer host to the photo rect — toolbars float on top
+    // via `position: absolute`. The inner canvas host stays at CSS
+    // 100%/100%, which means it tracks the container's content-box
+    // (border-box minus border-width). Setting it explicitly here would
+    // make it 100% of the OUTER host instead, overflowing the container
+    // by 2×border-width and producing mismatched corner radii.
     const prevW = parseFloat(savedW);
     const prevH = parseFloat(savedH);
     if (Number.isNaN(prevW) || Math.abs(prevW - displayW) >= 1 || Math.abs(prevH - displayH) >= 1) {
