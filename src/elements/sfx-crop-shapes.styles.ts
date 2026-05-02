@@ -225,4 +225,26 @@ export const sfxCropShapesStyles = css`
     .sfx-cr-shape-trigger-label { display: none; }
     .sfx-cr-shape-trigger { min-width: 0; padding: 8px 10px; }
   }
+
+  /* Narrow editor: drop the textual label + chevron so the trigger
+     reduces to an icon-only capsule that matches the rest of the
+     left-rail toolbar buttons. Anchor the dropdown to the left edge
+     since the trigger now lives in the left column. */
+  @container sfxcrop (max-width: 600px) {
+    .sfx-cr-shape-trigger-label { display: none; }
+    .sfx-cr-shape-chevron { display: none; }
+    .sfx-cr-shape-trigger {
+      min-width: 0;
+      width: 40px;
+      height: 36px;
+      padding: 0;
+      gap: 0;
+      justify-content: center;
+    }
+    .sfx-cr-shape-dropdown {
+      right: auto;
+      left: calc(100% + 8px);
+      top: 0;
+    }
+  }
 `;

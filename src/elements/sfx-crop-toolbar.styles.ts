@@ -165,4 +165,49 @@ export const sfxCropToolbarStyles = css`
       display: block;
     }
   }
+
+  /* Narrow editor (component itself is small, regardless of viewport):
+     stack the toolbar vertically along the LEFT edge, icons only.
+     The "Reset" label and the shape-trigger label collapse so every
+     control fits in the same 36×36 capsule footprint. */
+  @container sfxcrop (max-width: 600px) {
+    :host {
+      top: 12px;
+      bottom: 12px;
+      left: 12px;
+      right: auto;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    :host([toolbar-position="bottom"]) {
+      top: 12px;
+      bottom: 12px;
+    }
+    .sfx-cr-toolbar {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      padding: 6px 4px;
+    }
+    .sfx-cr-toolbar-group {
+      flex-direction: column;
+      gap: 6px;
+    }
+    .sfx-cr-toolbar-btn {
+      width: 40px;
+      height: 36px;
+    }
+    .sfx-cr-reset-btn {
+      width: 40px;
+      min-width: 0;
+      padding: 0;
+      gap: 0;
+      justify-content: center;
+    }
+    .sfx-cr-reset-btn span {
+      display: none;
+    }
+  }
 `;

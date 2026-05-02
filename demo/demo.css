@@ -125,6 +125,11 @@ kbd {
   gap: 24px;
 }
 
+.demo-mobile-nav,
+.demo-sidebar-backdrop {
+  display: none;
+}
+
 .demo-topbar-burger {
   display: none;
   width: 36px;
@@ -1392,7 +1397,16 @@ kbd {
     grid-template-columns: 1fr;
     padding: var(--sf-topbar-height) 0 0;
   }
-  .demo-sidebar {
+  /* On mobile the docs/examples sidebar is collapsed entirely — its
+     contents are surfaced inside the burger drawer (.demo-mobile-nav)
+     alongside the primary Home/Docs/Examples links so the user can
+     always cross-navigate. */
+  .demo-sidebar { display: none; }
+
+  /* Mobile drawer for the home page (no sidebar route) — burger toggles
+     a slide-in panel that exposes the primary nav (Home / Docs /
+     Examples) which is otherwise hidden on narrow screens. */
+  .demo-mobile-nav {
     position: fixed;
     top: var(--sf-topbar-height);
     left: 0;
@@ -1405,8 +1419,73 @@ kbd {
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     z-index: 90;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
   }
-  body.sidebar-open .demo-sidebar { transform: translateX(0); }
+  body.sidebar-open .demo-mobile-nav { transform: translateX(0); }
+  .demo-mobile-nav-link {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--sf-text);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .demo-mobile-nav-link:hover {
+    background: var(--sf-section-bg);
+    color: var(--sf-primary);
+  }
+  .demo-mobile-nav-link.is-active {
+    color: var(--sf-primary);
+    background: rgba(21, 91, 205, 0.08);
+  }
+  .demo-mobile-nav-link--sub {
+    font-size: 14px;
+    font-weight: 400;
+    padding: 7px 12px;
+    color: var(--sf-text-secondary, var(--sf-text));
+  }
+  .demo-mobile-nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--sf-border);
+  }
+  .demo-mobile-nav-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .demo-mobile-nav-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--sf-text-muted, #888);
+    padding: 8px 12px 4px;
+  }
+
+  /* Backdrop: covers the page behind the drawer; tapping it closes. */
+  .demo-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: var(--sf-topbar-height) 0 0 0;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 85;
+  }
+  body.sidebar-open .demo-sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .demo-content { padding: 24px 20px 60px; }
 
   .demo-hero { padding: 72px 20px 56px; }

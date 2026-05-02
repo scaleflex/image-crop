@@ -35,6 +35,11 @@ export const sfxCropStyles = css`
     font-family: var(--sfx-cr-font);
     user-select: none;
     -webkit-user-select: none;
+    /* Inline-size container so toolbar/shape sub-elements can switch to
+       a compact icon-only layout when the editor itself is narrow,
+       independent of the page viewport. */
+    container-type: inline-size;
+    container-name: sfxcrop;
   }
 
   /* ====== Loading ====== */

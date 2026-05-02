@@ -2079,11 +2079,53 @@ function layoutFor(path: string): 'home' | 'docs' | 'examples' {
   return 'home';
 }
 
+function renderMobileNav(path: string): string {
+  const isHome = path === '/';
+  const isDocs = path.startsWith('/docs');
+  const isEx   = path.startsWith('/examples');
+
+  // Sub-section list for the route currently in view (docs/examples).
+  // On home the primary nav alone is enough.
+  let secondary = '';
+  if (isDocs) {
+    secondary = `
+      <div class="demo-mobile-nav-section">
+        <div class="demo-mobile-nav-section-label">Documentation</div>
+        ${DOC_ROUTES.map((r) => `
+          <a href="#${r.path}" class="demo-mobile-nav-link demo-mobile-nav-link--sub${path === r.path ? ' is-active' : ''}">${r.label}</a>
+        `).join('')}
+      </div>
+    `;
+  } else if (isEx) {
+    secondary = EXAMPLE_GROUPS.map((g) => `
+      <div class="demo-mobile-nav-section">
+        <div class="demo-mobile-nav-section-label">${g.label}</div>
+        ${g.items.map((r) => `
+          <a href="#${r.path}" class="demo-mobile-nav-link demo-mobile-nav-link--sub${path === r.path ? ' is-active' : ''}">${r.label}</a>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+
+  return `
+    <nav class="demo-mobile-nav" id="demo-mobile-nav" aria-label="Mobile">
+      <div class="demo-mobile-nav-section">
+        <a href="#/"                     class="demo-mobile-nav-link${isHome ? ' is-active' : ''}">Home</a>
+        <a href="#/docs/getting-started" class="demo-mobile-nav-link${isDocs ? ' is-active' : ''}">Documentation</a>
+        <a href="#/examples/basic"       class="demo-mobile-nav-link${isEx ? ' is-active' : ''}">Examples</a>
+      </div>
+      ${secondary}
+    </nav>
+  `;
+}
+
 function renderShell(path: string, pageHtml: string): string {
   const layout = layoutFor(path);
   const sidebar = renderSidebar(path);
   return `
     ${renderHeader(path)}
+    ${renderMobileNav(path)}
+    <div class="demo-sidebar-backdrop" id="demo-sidebar-backdrop"></div>
     <main class="demo-main demo-main--${layout}" id="demo-main">
       ${sidebar}
       <div class="demo-content" id="content">${pageHtml}</div>
@@ -2116,10 +2158,19 @@ function navigate(): void {
   // Scroll the content area to top on nav. Keep anchors (#quick-start) working.
   if (!location.hash.includes('#quick-start')) window.scrollTo({ top: 0, behavior: 'instant' });
 
-  // Mobile sidebar toggle
-  document.getElementById('demo-burger')?.addEventListener('click', () => {
+  // Mobile sidebar / nav drawer.
+  // - Burger toggles `body.sidebar-open` which slides in either the
+  //   route's sidebar (docs/examples) or the mobile primary nav (home).
+  // - Tap on backdrop, drawer link, or Escape closes the drawer.
+  const closeDrawer = (): void => document.body.classList.remove('sidebar-open');
+  document.getElementById('demo-burger')?.addEventListener('click', (e) => {
+    e.stopPropagation();
     document.body.classList.toggle('sidebar-open');
   });
+  document.getElementById('demo-sidebar-backdrop')?.addEventListener('click', closeDrawer);
+  document
+    .querySelectorAll<HTMLAnchorElement>('.demo-mobile-nav a, .demo-sidebar a')
+    .forEach((a) => a.addEventListener('click', closeDrawer));
 
   // Per-crop theme toggle — rebind after each nav since the page HTML is
   // replaced wholesale. Each toggle button lives inside `.demo-crop-wrap`
@@ -2139,5 +2190,10 @@ function navigate(): void {
 
 window.addEventListener('hashchange', navigate);
 document.addEventListener('DOMContentLoaded', navigate);
+// Escape closes the mobile drawer regardless of which page-specific
+// listeners got rebound by the most recent navigate() call.
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.body.classList.remove('sidebar-open');
+});
 // Fire immediately if DOM already loaded (Vite HMR)
 if (document.readyState !== 'loading') navigate();
