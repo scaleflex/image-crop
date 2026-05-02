@@ -240,8 +240,12 @@ export const sfxCropShapesStyles = css`
   /* Narrow editor: drop the textual label + chevron so the trigger
      reduces to an icon-only 30×30 capsule that matches the rest of
      the compact left-rail toolbar. Anchor the dropdown to the left
-     edge since the trigger now lives in the left column. */
-  @media (max-width: 600px) {
+     edge since the trigger now lives in the left column. Container
+     query keyed off the sfxcrop named container so a narrow editor on
+     a wide desktop also collapses. */
+  @container sfxcrop (max-width: 600px) {
+    /* Label/chevron also need hiding when only the editor (not viewport)
+       is narrow — the 768px @media above only triggers on small viewports. */
     .sfx-cr-shape-trigger-label { display: none; }
     .sfx-cr-shape-chevron { display: none; }
     .sfx-cr-shape-trigger {

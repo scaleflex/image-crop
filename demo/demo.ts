@@ -1993,7 +1993,21 @@ function renderShell(path: string, pageHtml: string): string {
 // Boot
 // ---------------------------------------------------------------------------
 
+// Per-navigation cleanup: every listener wired in navigate() ties to this
+// AbortController; every ResizeObserver pushes onto navResizeObservers.
+// The next navigate() call aborts/disconnects them before re-binding so
+// long sessions don't accrete observers across many route changes.
+let navAbort: AbortController | null = null;
+let navResizeObservers: ResizeObserver[] = [];
+
 function navigate(): void {
+  // Tear down per-page bindings from the previous render.
+  navAbort?.abort();
+  for (const ro of navResizeObservers) ro.disconnect();
+  navResizeObservers = [];
+  navAbort = new AbortController();
+  const { signal } = navAbort;
+
   const path = currentPath();
   const page = PAGES[path] ?? PAGES['/'];
   const app  = document.getElementById('app')!;
@@ -2021,11 +2035,11 @@ function navigate(): void {
   document.getElementById('demo-burger')?.addEventListener('click', (e) => {
     e.stopPropagation();
     document.body.classList.toggle('sidebar-open');
-  });
-  document.getElementById('demo-sidebar-backdrop')?.addEventListener('click', closeDrawer);
+  }, { signal });
+  document.getElementById('demo-sidebar-backdrop')?.addEventListener('click', closeDrawer, { signal });
   document
     .querySelectorAll<HTMLAnchorElement>('.demo-mobile-nav a, .demo-sidebar a')
-    .forEach((a) => a.addEventListener('click', closeDrawer));
+    .forEach((a) => a.addEventListener('click', closeDrawer, { signal }));
 
   // Per-crop theme toggle — rebind after each nav since the page HTML is
   // replaced wholesale. Each toggle button lives inside `.demo-crop-wrap`
@@ -2033,13 +2047,16 @@ function navigate(): void {
   document.querySelectorAll<HTMLElement>('.demo-crop-wrap').forEach((wrap) => {
     const btn = wrap.querySelector<HTMLButtonElement>('.demo-theme-toggle');
     if (!btn) return;
-    applyThemeToWrap(wrap, getStoredTheme());
+    const initialTheme = getStoredTheme();
+    applyThemeToWrap(wrap, initialTheme);
+    btn.setAttribute('aria-pressed', initialTheme === 'dark' ? 'true' : 'false');
     btn.addEventListener('click', () => {
       const current = wrap.querySelector('sfx-crop')?.getAttribute('theme') as DemoTheme | null;
       const next: DemoTheme = current === 'dark' ? 'light' : 'dark';
       localStorage.setItem(THEME_KEY, next);
       applyThemeToWrap(wrap, next);
-    });
+      btn.setAttribute('aria-pressed', next === 'dark' ? 'true' : 'false');
+    }, { signal });
     // Keep the toggle pinned to the host's actual top-right corner.
     // The wrap is full-width (definite measurement parent for the
     // editor), but the host shrinks to image aspect inside, centered
@@ -2051,7 +2068,9 @@ function navigate(): void {
       const sync = () => {
         wrap.style.setProperty('--sfx-host-w', `${host.offsetWidth}px`);
       };
-      new ResizeObserver(sync).observe(host);
+      const ro = new ResizeObserver(sync);
+      ro.observe(host);
+      navResizeObservers.push(ro);
       sync();
     }
   });

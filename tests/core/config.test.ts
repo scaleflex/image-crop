@@ -24,6 +24,17 @@ describe('DEFAULT_CONFIG', () => {
     expect(DEFAULT_CONFIG.enableAnimations).toBe(true);
     expect(DEFAULT_CONFIG.animationSpeed).toBe(1.0);
   });
+
+  it('exposes the documented default aspect-ratio set', () => {
+    // Public API surface — consumers rely on these built-ins being
+    // present out-of-the-box. Adding a ratio is fine; removing one is a
+    // breaking change that should fail this test deliberately.
+    expect(DEFAULT_CONFIG.availableShapes).toEqual([
+      'free', 'square',
+      '16:9', '4:3', '3:2', '5:4', '2:1',
+      '9:16', '3:4', '2:3', '4:5', '1:2',
+    ]);
+  });
 });
 
 describe('mergeConfig', () => {

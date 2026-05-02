@@ -187,8 +187,9 @@ export const sfxCropZoomStyles = css`
   }
 
   /* Narrow editor — match the compact 30×30 trigger sizing of the
-     rest of the vertical left-rail toolbar. */
-  @media (max-width: 600px) {
+     rest of the vertical left-rail toolbar. Container query so a
+     narrow editor on a wide desktop also collapses. */
+  @container sfxcrop (max-width: 600px) {
     .sfx-cr-zoom-trigger {
       width: 30px;
       height: 30px;

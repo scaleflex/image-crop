@@ -16,6 +16,13 @@ export const sfxCropStyles = css`
     height: 100%;
     font-family: var(--sfx-cr-font);
     color: var(--sfx-cr-text);
+    /* Establish a named inline-size container so the toolbar / shapes /
+       zoom / rotate sub-elements can switch to their compact left-rail
+       layout based on the editor's own width — independent of the page
+       viewport. A narrow column on a wide desktop (sidebar preview,
+       split view) gets the same compact UI as a phone. */
+    container-type: inline-size;
+    container-name: sfxcrop;
   }
 
   :host([hidden]) { display: none; }

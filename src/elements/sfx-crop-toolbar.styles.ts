@@ -183,8 +183,11 @@ export const sfxCropToolbarStyles = css`
   /* Narrow editor (component itself is small, regardless of viewport):
      stack the toolbar vertically along the LEFT edge, icons only.
      Tucked tight against the edge with a compact 30×30 footprint so
-     the photo behind keeps maximum breathing room. */
-  @media (max-width: 600px) {
+     the photo behind keeps maximum breathing room. Triggered by the
+     sfxcrop container set on the sfx-crop host — matches editor
+     width, not viewport width, so a narrow column on a wide desktop
+     gets the same compact layout. */
+  @container sfxcrop (max-width: 600px) {
     :host {
       top: 8px;
       bottom: 8px;

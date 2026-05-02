@@ -353,7 +353,7 @@ export class SfxCropElement extends SfxCropBaseElement {
 
     const parseMax = (raw: string): number => {
       if (!raw || raw === 'none') return Number.POSITIVE_INFINITY;
-      const v = parseFloat(raw);
+      const v = parsePx(raw);
       return Number.isFinite(v) && v > 0 ? v : Number.POSITIVE_INFINITY;
     };
 
@@ -362,15 +362,23 @@ export class SfxCropElement extends SfxCropBaseElement {
     let maxH = parseMax(hostStyle.maxHeight);
 
     const parent = this.parentElement;
+    const parentStyle = parent ? getComputedStyle(parent) : null;
+    // Hidden parent (display:none, inactive tab) reports clientWidth=0.
+    // Without a bail-out we'd fall through to maxW=Infinity and blow the
+    // host up to the image's natural size.
+    if (parent && parentStyle && (parentStyle.display === 'none' || parent.clientWidth === 0)) {
+      this.style.width = savedW;
+      this.style.height = savedH;
+      return;
+    }
     // `clientWidth` returns the padding-box width — laying out a child
     // against that overruns the parent's content-box by 2×padding and
     // causes the crop to overflow containers like cards/cells. Subtract
     // the parent's own padding so we measure the content area instead.
     const parentInnerWidth = (): number => {
-      if (!parent) return 0;
-      const ps = getComputedStyle(parent);
+      if (!parent || !parentStyle) return 0;
       const raw = parent.clientWidth;
-      return Math.max(0, raw - (parseFloat(ps.paddingLeft) || 0) - (parseFloat(ps.paddingRight) || 0));
+      return Math.max(0, raw - (parsePx(parentStyle.paddingLeft) || 0) - (parsePx(parentStyle.paddingRight) || 0));
     };
     // Width: the parent is almost always horizontally definite (block
     // flow follows its container), so parent.clientWidth reflects the
@@ -380,14 +388,19 @@ export class SfxCropElement extends SfxCropBaseElement {
     const parentW = parentInnerWidth();
     if (parentW > 0) maxW = Math.min(maxW, parentW);
     else if (!Number.isFinite(maxW)) maxW = window.innerWidth;
-    // Height: do NOT clamp by parent.clientHeight. Parents in this
-    // component are almost always `height: auto`, in which case their
-    // clientHeight echoes our own previous content height — including
-    // the canvas's stale inline style.height from the last fit. That
-    // creates a one-way shrink loop: wrap shrinks → host shrinks → on
-    // growth, parentH still reads the small previous value → host
-    // stays small. Trust the consumer's CSS max-height (or fall back
-    // to viewport height) instead.
+    // Height: clamp by parent.clientHeight ONLY when the parent has a
+    // definite (non-auto) height — flex/grid cells, fixed-vh modals,
+    // <dialog>. For the common `height: auto` case the parent's
+    // clientHeight echoes our own previous content height and creates a
+    // one-way shrink loop, so we trust the consumer's CSS max-height
+    // (or fall back to viewport height) instead.
+    if (parent && parentStyle && parentStyle.height !== 'auto' && parent.clientHeight > 0) {
+      const innerH = Math.max(
+        0,
+        parent.clientHeight - (parsePx(parentStyle.paddingTop) || 0) - (parsePx(parentStyle.paddingBottom) || 0),
+      );
+      if (innerH > 0) maxH = Math.min(maxH, innerH);
+    }
     if (!Number.isFinite(maxH)) maxH = window.innerHeight;
 
     this.style.width = savedW;
@@ -410,8 +423,8 @@ export class SfxCropElement extends SfxCropBaseElement {
     // (border-box minus border-width). Setting it explicitly here would
     // make it 100% of the OUTER host instead, overflowing the container
     // by 2×border-width and producing mismatched corner radii.
-    const prevW = parseFloat(savedW);
-    const prevH = parseFloat(savedH);
+    const prevW = parsePx(savedW);
+    const prevH = parsePx(savedH);
     if (Number.isNaN(prevW) || Math.abs(prevW - displayW) >= 1 || Math.abs(prevH - displayH) >= 1) {
       this.style.width = `${displayW}px`;
       this.style.height = `${displayH}px`;
@@ -426,8 +439,12 @@ export class SfxCropElement extends SfxCropBaseElement {
   private parseInitialCrop(): CropRect | null {
     const v = this.initialCrop;
     if (!v) return null;
-    if (typeof v === 'object') return v;
-    try { return JSON.parse(v) as CropRect; } catch { return null; }
+    const raw = typeof v === 'object' ? v : safeJsonParse(v);
+    if (!raw || typeof raw !== 'object') return null;
+    const r = raw as Record<string, unknown>;
+    if (typeof r.x !== 'number' || typeof r.y !== 'number' ||
+        typeof r.width !== 'number' || typeof r.height !== 'number') return null;
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
   }
 
   private buildConfig(): Partial<SfxCropConfig> {
@@ -483,6 +500,25 @@ const LIVE_CONFIG_KEYS = [
   'enableAnimations', 'animationSpeed',
   'keyboard', 'pinchZoom', 'wheelZoom',
 ] as const satisfies ReadonlyArray<keyof SfxCropConfig & keyof SfxCropElement>;
+
+/**
+ * Parse a CSS length to a px number. Returns NaN for non-px-resolved
+ * computed values (e.g. unresolved `calc(...)`), letting callers treat
+ * the result as "unknown" rather than silently truncating to the first
+ * literal in the expression.
+ */
+function parsePx(raw: string): number {
+  if (!raw) return NaN;
+  const v = parseFloat(raw);
+  if (!Number.isFinite(v)) return NaN;
+  // `getComputedStyle` resolves to `<number>px` for resolvable lengths.
+  // Anything else (calc(), var(), keywords) we treat as unknown.
+  return /^-?\d*\.?\d+(?:px)?$/.test(raw.trim()) ? v : NaN;
+}
+
+function safeJsonParse(s: string): unknown {
+  try { return JSON.parse(s); } catch { return null; }
+}
 
 declare global {
   interface HTMLElementTagNameMap {
