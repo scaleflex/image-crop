@@ -113,7 +113,9 @@ export function renderToCanvas(
     outH = maxHeight;
   }
 
-  const renderScale = outW / cropW;
+  // Guard against a degenerate crop (e.g. setCropRect({width:0})): dividing by
+  // ~0 would make renderScale Infinity and corrupt the canvas transform.
+  const renderScale = cropW > 1e-6 ? outW / cropW : 1;
 
   const canvas = document.createElement('canvas');
   canvas.width = outW;

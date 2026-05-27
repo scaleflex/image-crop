@@ -67,9 +67,11 @@ describe('constrainScale', () => {
 
 describe('clampCoverPanScale', () => {
   const whole = (w: number, h: number) => ({ x: 0, y: 0, width: w, height: h });
+  // drawW0/drawH0 = photo draw size at scale 1 in container px. For these
+  // square/whole-frame cases the cover-fit photo equals the container box.
 
   it('locks a square photo into a square frame with no pan slack', () => {
-    const r = clampCoverPanScale(makeState({ panX: 50, panY: 50 }), 100, 100, whole(100, 100), 100, 100);
+    const r = clampCoverPanScale(makeState({ panX: 50, panY: 50 }), 100, 100, whole(100, 100), 100, 100, 5);
     expect(r.minScale).toBeCloseTo(1);
     expect(r.scale).toBeCloseTo(1);
     expect(r.panX).toBeCloseTo(0);
@@ -77,39 +79,48 @@ describe('clampCoverPanScale', () => {
   });
 
   it('allows vertical pan slack when a square photo covers a wide frame', () => {
-    // 2:1 frame, square photo → cover scales to 200×200; width exact, 100px
+    // 2:1 frame, square photo cover-fit → 200×200 draw; width exact, 100px
     // vertical slack → ±50.
-    const r = clampCoverPanScale(makeState({ panY: 80 }), 200, 100, whole(200, 100), 100, 100);
+    const r = clampCoverPanScale(makeState({ panY: 80 }), 200, 100, whole(200, 100), 200, 200, 5);
     expect(r.minScale).toBeCloseTo(1);
     expect(r.panX).toBeCloseTo(0);
     expect(r.panY).toBeCloseTo(50); // clamped from 80
   });
 
   it('raises scale to cover a fine tilt', () => {
-    const r = clampCoverPanScale(makeState({ rotation: 45 }), 100, 100, whole(100, 100), 100, 100);
-    // needW = needH = 100*(cos45+sin45) ≈ 141.42; drawW = 100 → minScale ≈ 1.414
+    const r = clampCoverPanScale(makeState({ rotation: 45 }), 100, 100, whole(100, 100), 100, 100, 5);
+    // needW = needH = 100*(cos45+sin45) ≈ 141.42; drawW0 = 100 → minScale ≈ 1.414
     expect(r.minScale).toBeCloseTo(Math.SQRT2, 2);
     expect(r.scale).toBeCloseTo(Math.SQRT2, 2);
   });
 
+  it('caps the cover floor at maxScale (never inverts scale bounds)', () => {
+    // 45° tilt needs ~1.414× to cover, but maxScale is 1.2 → floor pinned to
+    // 1.2 so minScale ≤ maxScale and the renderer bounds can't invert.
+    const r = clampCoverPanScale(makeState({ rotation: 45 }), 100, 100, whole(100, 100), 100, 100, 1.2);
+    expect(r.minScale).toBeCloseTo(1.2);
+    expect(r.scale).toBeCloseTo(1.2);
+    expect(r.minScale).toBeLessThanOrEqual(1.2);
+  });
+
   it('never lowers a scale the user zoomed past the cover floor', () => {
-    const r = clampCoverPanScale(makeState({ scale: 3 }), 100, 100, whole(100, 100), 100, 100);
+    const r = clampCoverPanScale(makeState({ scale: 3 }), 100, 100, whole(100, 100), 100, 100, 5);
     expect(r.scale).toBeCloseTo(3);
   });
 
   it('accounts for a 90° quarter-turn when computing the cover floor', () => {
     // Portrait photo (100×200) into a landscape 2:1 frame, turned 90° so the
-    // photo's long side runs horizontal.
-    const r = clampCoverPanScale(makeState({ quarterTurns: 90 }), 200, 100, whole(200, 100), 100, 200);
-    expect(r.minScale).toBeGreaterThan(0);
+    // photo's long side runs horizontal → cover draw 100×200.
+    const r = clampCoverPanScale(makeState({ quarterTurns: 90 }), 200, 100, whole(200, 100), 100, 200, 5);
+    expect(r.minScale).toBeCloseTo(2);
     expect(Number.isFinite(r.scale)).toBe(true);
   });
 
   it('shifts the pan window for an off-centre (classic) crop frame', () => {
-    // Top-left 50×50 crop in a 100×100 container, square photo. The centred
-    // photo must be able to pan left to cover the frame, but not right.
+    // Top-left 50×50 crop in a 100×100 container, classic stretch draw (100×100).
+    // The centred photo must pan left to cover the frame, but not right.
     const frame = { x: 0, y: 0, width: 50, height: 50 };
-    const r = clampCoverPanScale(makeState({ panX: 40, panY: 40 }), 100, 100, frame, 100, 100);
+    const r = clampCoverPanScale(makeState({ panX: 40, panY: 40 }), 100, 100, frame, 100, 100, 5);
     expect(r.minScale).toBeCloseTo(0.5);
     expect(r.panX).toBeCloseTo(0);  // clamped down from +40 (window [-50, 0])
     expect(r.panY).toBeCloseTo(0);

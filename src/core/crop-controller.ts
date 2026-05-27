@@ -19,6 +19,7 @@ import {
   applyPan,
 } from '../transforms/transform-state';
 import { createRenderer, type RendererHandle, type CropShapeType } from '../canvas/renderer';
+import { computeCoverDraw } from '../canvas/image-layer';
 import { clampCoverPanScale } from '../transforms/constrain';
 import { hitTest, getCursor } from '../canvas/hit-test';
 import { createPointerTracker, type PointerTrackerHandle } from '../interactions/pointer-tracker';
@@ -156,25 +157,45 @@ export function createCropController(opts: CropControllerOptions): CropControlle
   /** Normalized rect for the fixed variant: the whole editor box is the crop. */
   const FIXED_CROP_RECT = { x: 0, y: 0, width: 1, height: 1 };
 
+  // Last laid-out editor-box size (CSS px). Tracked so export still works when
+  // the editor is momentarily unlaid (hidden tab / detached), where
+  // `clientWidth/Height` read 0.
+  let lastLayoutW = 0;
+  let lastLayoutH = 0;
+  function layoutSize(): { w: number; h: number } {
+    const cw = layoutContainer.clientWidth;
+    const ch = layoutContainer.clientHeight;
+    if (cw > 0 && ch > 0) {
+      lastLayoutW = cw;
+      lastLayoutH = ch;
+    }
+    return { w: cw > 0 ? cw : lastLayoutW, h: ch > 0 ? ch : lastLayoutH };
+  }
+
   /**
    * Keep the photo covering the crop so the export never has transparent gaps.
-   * Clamps pan + raises scale to the cover floor, and pins the renderer's lower
-   * scale bound to it so the elastic bounce can't dip under coverage.
+   * Clamps pan + raises scale to the (max-capped) cover floor, and pins the
+   * renderer's lower scale bound to it so the elastic bounce can't dip under
+   * coverage.
    *
-   * - `fixed`: the frame is the whole editor box.
-   * - `classic`: the frame is the movable/resizable crop rect (so the photo is
-   *   forced to fill whatever the user frames). Skipped on a 90°/270° turn,
-   *   where classic intentionally letterboxes the rotated photo to fit.
+   * - `fixed`: frame = whole editor box; photo draw model = cover-fit.
+   * - `classic`: frame = movable/resizable crop rect; photo draw model = the
+   *   stretched container box (matches image-layer's classic draw). Skipped on
+   *   a 90°/270° turn, where classic intentionally letterboxes to fit.
    */
   function applyCover(): void {
     if (!image || !renderer) return;
-    const w = layoutContainer.clientWidth;
-    const h = layoutContainer.clientHeight;
+    const { w, h } = layoutSize();
     if (w <= 0 || h <= 0) return;
 
     let frame: { x: number; y: number; width: number; height: number };
+    let drawW0: number;
+    let drawH0: number;
     if (config.variant === 'fixed') {
       frame = { x: 0, y: 0, width: w, height: h };
+      const cover = computeCoverDraw(w, h, image.naturalWidth, image.naturalHeight, state.quarterTurns);
+      drawW0 = cover.drawW;
+      drawH0 = cover.drawH;
     } else {
       // Classic keeps the existing letterbox on quarter-turns.
       if (Math.round(state.quarterTurns / 90) % 2 !== 0) {
@@ -183,9 +204,12 @@ export function createCropController(opts: CropControllerOptions): CropControlle
       }
       const cr = state.cropRect;
       frame = { x: cr.x * w, y: cr.y * h, width: cr.width * w, height: cr.height * h };
+      // Classic draws the photo stretched to the container box (image-layer.ts).
+      drawW0 = w;
+      drawH0 = h;
     }
 
-    const r = clampCoverPanScale(state, w, h, frame, image.naturalWidth, image.naturalHeight);
+    const r = clampCoverPanScale(state, w, h, frame, drawW0, drawH0, config.maxScale);
     state = { ...state, scale: r.scale, panX: r.panX, panY: r.panY };
     renderer.setScaleBounds(r.minScale, config.maxScale);
   }
@@ -638,6 +662,9 @@ export function createCropController(opts: CropControllerOptions): CropControlle
 
   function toCanvas(): HTMLCanvasElement {
     if (!image) throw new Error('No image loaded');
+    // Use the last laid-out size so export still rescales pan correctly when
+    // the editor is currently unlaid (hidden tab / detached → clientWidth 0).
+    const { w, h } = layoutSize();
     return renderToCanvas(
       image,
       state,
@@ -648,8 +675,8 @@ export function createCropController(opts: CropControllerOptions): CropControlle
       // Pan is stored in the renderer's CSS-px container space; pass the
       // container dims so the exporter can rescale pan into display space.
       // The height + variant drive the fixed variant's cover-fit export.
-      layoutContainer.clientWidth,
-      layoutContainer.clientHeight,
+      w,
+      h,
       config.variant,
     );
   }
@@ -694,8 +721,12 @@ export function createCropController(opts: CropControllerOptions): CropControlle
       } else {
         // Back to classic: restore an editable, centered frame and the
         // config-driven scale bounds (applyCover no longer runs to pin them).
+        // Also reset the photo's zoom/pan — otherwise the scale forced up and
+        // the pan accumulated in fixed mode carry over, leaving the photo
+        // zoomed-in / offset under the freshly centered classic frame.
         renderer?.setScaleBounds(config.minScale, config.maxScale);
         state = applyShapeChange(state, cropShape, image?.naturalWidth ?? 1, image?.naturalHeight ?? 1);
+        state = applyScale({ ...state, panX: 0, panY: 0 }, config.initialScale ?? 1, config.minScale, config.maxScale);
       }
       syncDisplayState();
       emitChange();

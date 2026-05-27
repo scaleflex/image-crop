@@ -1,6 +1,5 @@
 import type { CropRect, CropShapeName, TransformState } from '../core/types';
 import { clamp } from '../utils/math';
-import { computeCoverDraw } from '../canvas/image-layer';
 
 /**
  * Parse a free-form aspect-ratio string like `"16:9"`, `"7:2"`, or `"11:8"`
@@ -133,7 +132,7 @@ export function computeMinScale(
 /**
  * Cover constraint: keep the photo fully covering a target frame so the crop
  * never exports transparent gaps. Returns the `scale` / `panX` / `panY` to use
- * plus the minimum scale below which coverage breaks.
+ * plus the (capped) minimum scale below which coverage breaks.
  *
  * The frame is given in container CSS px and may be **off-centre** (the classic
  * movable crop rect) or the whole editor box (the fixed variant). The photo is
@@ -143,22 +142,29 @@ export function computeMinScale(
  * translate(center)→scale→translate(pan)). The math works in CSS px and divides
  * the slack by `scale`.
  *
- * Fine tilt (`state.rotation`) is handled conservatively by inflating the frame
- * the photo must cover to the tilt's axis-aligned bounding box. Flip is a no-op
- * (mirrors about the centre). 90° turns are folded into `computeCoverDraw`.
+ * `drawW0` / `drawH0` are the photo's draw size **at scale 1** in container px —
+ * the caller passes the model that matches the actual render: cover-fit
+ * (`computeCoverDraw`) in the fixed variant, or the stretched container box
+ * (`w × h`) in classic. This keeps the clamp aligned with what's drawn even
+ * when the editor box aspect diverges from the image aspect.
+ *
+ * Fine tilt (`state.rotation`) inflates the frame to its axis-aligned bounding
+ * box (conservative). Flip is a no-op (mirrors about the centre).
+ *
+ * `maxScale` caps the cover floor: if covering the frame would need more zoom
+ * than the consumer allows, the floor is pinned to `maxScale` (so the returned
+ * `minScale ≤ maxScale` and the renderer's scale bounds never invert — at the
+ * cost of a residual gap, which is an unavoidable min/max-scale conflict).
  */
 export function clampCoverPanScale(
   state: TransformState,
   containerW: number,
   containerH: number,
   frame: { x: number; y: number; width: number; height: number },
-  imageW: number,
-  imageH: number,
+  drawW0: number,
+  drawH0: number,
+  maxScale: number,
 ): { scale: number; panX: number; panY: number; minScale: number } {
-  // Base cover draw size (CSS px) at scale 1 — the photo drawn to cover the
-  // whole container at its natural aspect.
-  const { drawW, drawH } = computeCoverDraw(containerW, containerH, imageW, imageH, state.quarterTurns);
-
   // Tilt-inflated frame the photo must cover.
   const rad = (state.rotation * Math.PI) / 180;
   const c = Math.abs(Math.cos(rad));
@@ -166,9 +172,11 @@ export function clampCoverPanScale(
   const needW = frame.width * c + frame.height * s;
   const needH = frame.width * s + frame.height * c;
 
-  // Minimum scale so the (scaled) photo extents cover the inflated frame.
-  const minScale = Math.max(needW / drawW, needH / drawH);
-  const scale = Math.max(state.scale, minScale);
+  // Scale at which the photo extents exactly cover the inflated frame, capped
+  // at maxScale so the floor can never exceed the ceiling.
+  const coverFloor = Math.max(needW / drawW0, needH / drawH0);
+  const minScale = Math.min(coverFloor, maxScale);
+  const scale = clamp(state.scale, minScale, maxScale);
 
   // The photo is centred in the container; offset is the container centre minus
   // the frame centre, so an off-centre crop shifts the allowed pan window.
@@ -176,8 +184,9 @@ export function clampCoverPanScale(
   const offsetY = containerH / 2 - (frame.y + frame.height / 2);
 
   // Half-slack between the (scaled) photo extents and the frame it must cover.
-  const slackX = Math.max(0, (drawW * scale - needW) / 2);
-  const slackY = Math.max(0, (drawH * scale - needH) / 2);
+  // Zero (locked) when the cover floor was capped below what coverage needs.
+  const slackX = Math.max(0, (drawW0 * scale - needW) / 2);
+  const slackY = Math.max(0, (drawH0 * scale - needH) / 2);
 
   return {
     scale,
