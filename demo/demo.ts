@@ -1134,7 +1134,8 @@ function renderDocTheming(): string {
         ['--sfx-cr-frame-shadow',   'Subtle shadow behind the frame outline.'],
         ['--sfx-cr-handle-fill',    'Corner-handle fill.'],
         ['--sfx-cr-handle-stroke',  'Corner-handle outline.'],
-        ['--sfx-cr-ruler-ink',      'Fine-tilt ruler ink (ticks, indicator, degree label). Deepened in light theme for legibility over bright photos.'],
+        ['--sfx-cr-ruler-ink',      'Fine-tilt ruler ink (ticks, indicator, degree label). Near-white core that floats over the photo.'],
+        ['--sfx-cr-ruler-halo',     'Dark halo wrapped around the ruler ink so it stays legible over bright photos too.'],
       ],
     },
     {
@@ -1780,7 +1781,8 @@ function renderExampleTheming(): string {
   --sfx-cr-primary-glow:   rgba(234, 88, 12, 0.28);
 
   /* Text + ICON colors. Toolbar icons inherit --sfx-cr-text-secondary
-     in their idle state; --sfx-cr-text drives ruler ticks + value text. */
+     in their idle state. (The fine-tilt ruler uses its own --sfx-cr-ruler-ink
+     + --sfx-cr-ruler-halo so it stays legible over any photo.) */
   --sfx-cr-text:           #7c2d12;
   --sfx-cr-text-secondary: #ea580c;   /* idle icon color */
   --sfx-cr-text-muted:     #fdba74;

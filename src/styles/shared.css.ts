@@ -27,10 +27,13 @@ export const designTokens = css`
     --sfx-cr-text: oklch(0.37 0.022 248.413);
     --sfx-cr-text-secondary: oklch(53.03% 0.039 249.89);
     --sfx-cr-text-muted: oklch(0.685 0.033 249.82);
-    /* Fine-tilt ruler ink. Light theme deepens it well past --sfx-cr-text so
-       the dotted ticks read against a bright/washed photo; dark theme reuses
-       the standard light text. */
-    --sfx-cr-ruler-ink: oklch(0.24 0.02 248.413);
+    /* Fine-tilt ruler ink + halo. The ruler floats directly over the photo,
+       whose brightness is unknown, so its colour can't track the theme. We
+       render a bright (near-white) core wrapped in a dark halo: the white core
+       reads over dark images, the dark halo reads over bright ones — the same
+       trick subtitles use to stay legible over arbitrary footage. */
+    --sfx-cr-ruler-ink: oklch(1 0 0);
+    --sfx-cr-ruler-halo: oklch(0 0 0 / 0.85);
 
     --sfx-cr-border: oklch(92.86% 0.009 247.92);
     --sfx-cr-border-light: oklch(0.974 0.006 239.819);
@@ -100,8 +103,9 @@ export const designTokens = css`
     --sfx-cr-text: oklch(0.95 0.01 264.55);
     --sfx-cr-text-secondary: oklch(0.9 0.01 264.55);
     --sfx-cr-text-muted: oklch(0.75 0.01 249.82);
-    /* Ruler keeps the standard light ink on the dark canvas. */
-    --sfx-cr-ruler-ink: var(--sfx-cr-text);
+    /* Ruler keeps the white core + dark halo over the photo (see light theme);
+       --sfx-cr-ruler-halo is inherited from the base :host. */
+    --sfx-cr-ruler-ink: oklch(1 0 0);
 
     --sfx-cr-border: oklch(0.3 0.01 247.92);
     --sfx-cr-border-light: oklch(0.3 0.01 285);

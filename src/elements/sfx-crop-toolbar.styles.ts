@@ -267,8 +267,14 @@ export const sfxCropToolbarStyles = css`
     :host(:not([variant="fixed"])) {
       top: 8px;
       bottom: 8px;
-      left: 4px;
-      right: auto;
+      /* Stay full-width (don't collapse to a left-hugging strip): the Done
+         button is absolutely positioned against this host, so the host must
+         keep spanning to the container's right edge for Done to stay in the
+         top-right corner. The button column is tucked left with padding
+         instead of by repositioning the whole host. */
+      left: 0;
+      right: 0;
+      padding-left: 4px;
       justify-content: flex-start;
       /* Cross-axis centers the stacked button column vertically inside
          the full-height host strip — toolbar floats in the middle of
@@ -279,6 +285,20 @@ export const sfxCropToolbarStyles = css`
       top: 8px;
       bottom: 8px;
     }
+    /* Keep Done pinned to the editor's top-right corner — exactly where the
+       desktop bar puts it — even though the host now spans the full photo
+       height (top:50% would otherwise drop it to the vertical middle). A bit
+       smaller and tucked tighter into the corner to free up the photo. */
+    :host(:not([variant="fixed"])) .sfx-cr-done-btn {
+      top: 6px;
+      right: 8px;
+      height: 28px;
+      padding: 0 12px;
+      font-size: 12px;
+      transform: none;
+    }
+    :host(:not([variant="fixed"])) .sfx-cr-done-btn:hover { transform: scale(1.02); }
+    :host(:not([variant="fixed"])) .sfx-cr-done-btn:active { transform: scale(0.97); }
     :host(:not([variant="fixed"])) .sfx-cr-toolbar {
       flex-direction: column;
       flex-wrap: nowrap;
@@ -341,7 +361,17 @@ export const sfxCropToolbarStyles = css`
       display: none;
     }
     :host([variant="fixed"]) .sfx-cr-done-btn {
-      padding: 0 14px;
+      /* Stay in the top-right corner when the bar wraps to multiple rows
+         (top:50% would otherwise centre Done over the taller wrapped bar),
+         a bit smaller and tucked tighter into the corner. */
+      top: 6px;
+      right: 8px;
+      height: 28px;
+      padding: 0 12px;
+      font-size: 12px;
+      transform: none;
     }
+    :host([variant="fixed"]) .sfx-cr-done-btn:hover { transform: scale(1.02); }
+    :host([variant="fixed"]) .sfx-cr-done-btn:active { transform: scale(0.97); }
   }
 `;

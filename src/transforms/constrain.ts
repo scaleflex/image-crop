@@ -77,7 +77,43 @@ export function enforceAspectRatio(
     height = width / adjustedRatio;
   }
 
-  // Enforce minimum
+  // Resolve the anchor each axis must hold: the edge/corner diagonally
+  // opposite the dragged handle. updateResize already pinned the *driver*
+  // dimension's anchor, but recomputing the *dependent* dimension above grows
+  // it from the (x, y) origin — which would drag the anchored edge (e.g. an
+  // N/NW/NE drag moving the bottom edge). A vertical-/horizontal-only handle
+  // has no opposite corner, so it grows symmetrically about the centre.
+  const origRight = crop.x + crop.width;
+  const origBottom = crop.y + crop.height;
+  const cx = crop.x + crop.width / 2;
+  const cy = crop.y + crop.height / 2;
+
+  // Room the rect may occupy while keeping that anchor inside the image. For a
+  // centred axis it's twice the distance to the nearer edge.
+  let maxWidth: number;
+  if (handle.includes('w')) maxWidth = origRight; // right edge pinned
+  else if (handle.includes('e')) maxWidth = 1 - crop.x; // left edge pinned
+  else maxWidth = 2 * Math.min(cx, 1 - cx); // centred
+  let maxHeight: number;
+  if (handle.includes('n')) maxHeight = origBottom; // bottom edge pinned
+  else if (handle.includes('s')) maxHeight = 1 - crop.y; // top edge pinned
+  else maxHeight = 2 * Math.min(cy, 1 - cy); // centred
+
+  // Cap the size to that room WITHOUT breaking the ratio: scale both axes by
+  // the same factor (only ever shrinking). The previous independent
+  // Math.min(…, 1) clamps got this wrong — they capped one axis and left the
+  // other, so the locked ratio broke and the trailing clamp dragged the anchor
+  // whenever the ratio-derived dimension overran the room past the pinned edge.
+  const fit = Math.min(1, maxWidth / width, maxHeight / height);
+  if (fit < 1) {
+    width *= fit;
+    height *= fit;
+  }
+
+  // Enforce the minimum crop size. Bumping one axis to the floor re-derives the
+  // other through the ratio; if the anchor sits so close to an edge that the
+  // min size can't fit, the trailing clamp absorbs the small overflow (a
+  // physical limit, not the drift bug).
   const minW = minSize / imageWidth;
   const minH = minSize / imageHeight;
   if (width < minW) {
@@ -89,9 +125,16 @@ export function enforceAspectRatio(
     width = height * adjustedRatio;
   }
 
-  // Clamp to bounds
-  width = Math.min(width, 1);
-  height = Math.min(height, 1);
+  // Place the rect so the resolved anchor stays fixed.
+  if (handle.includes('w')) x = origRight - width; // pin right edge
+  else if (handle.includes('e')) x = crop.x; // pin left edge
+  else x = cx - width / 2; // keep horizontal centre
+  if (handle.includes('n')) y = origBottom - height; // pin bottom edge
+  else if (handle.includes('s')) y = crop.y; // pin top edge
+  else y = cy - height / 2; // keep vertical centre
+
+  // Safety net: keep the rect inside the image. With the room-capping above
+  // this is a no-op except the over-constrained min-size corner case.
   x = clamp(x, 0, 1 - width);
   y = clamp(y, 0, 1 - height);
 

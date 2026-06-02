@@ -249,7 +249,12 @@ kbd {
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  margin-bottom: 12px;
+  /* Share the crop wrap's max-width + centering (see .demo-card.demo-crop-wrap)
+     so flex-end lands the last button exactly on the editor's right edge,
+     instead of the wider section-inner edge. */
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 12px;
 }
 
 .demo-theme-toggle {

@@ -318,9 +318,9 @@ Every visual surface is keyed off `--sfx-cr-*` tokens. The full list (see `src/s
 
 ### Canvas & frame
 
-`--sfx-cr-overlay-color`, `--sfx-cr-frame-color`, `--sfx-cr-frame-shadow`, `--sfx-cr-handle-fill`, `--sfx-cr-handle-stroke`, `--sfx-cr-ruler-ink`, `--sfx-cr-ring`, `--sfx-cr-shadow`.
+`--sfx-cr-overlay-color`, `--sfx-cr-frame-color`, `--sfx-cr-frame-shadow`, `--sfx-cr-handle-fill`, `--sfx-cr-handle-stroke`, `--sfx-cr-ruler-ink`, `--sfx-cr-ruler-halo`, `--sfx-cr-ring`, `--sfx-cr-shadow`.
 
-`--sfx-cr-ruler-ink` colours the fine-tilt ruler (ticks, centre indicator, degree readout); it defaults to a deepened ink in the light theme so the dots stay legible over a bright photo, and to the standard light text in the dark theme.
+`--sfx-cr-ruler-ink` and `--sfx-cr-ruler-halo` colour the fine-tilt ruler (ticks, centre indicator, degree readout). The ruler floats directly over the photo, whose brightness is unknown, so it can't track the theme: the ink defaults to a near-white core and the halo to a dark glow wrapped around it, so the white core reads over dark images while the halo reads over bright ones (the trick subtitles use). Override both together if you want a different ink/halo pairing.
 
 ### Toolbar & controls
 

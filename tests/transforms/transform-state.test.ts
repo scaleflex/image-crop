@@ -8,6 +8,7 @@ import {
   applyShapeChange,
   applyCropResize,
 } from '../../src/transforms/transform-state';
+import { enforceAspectRatio } from '../../src/transforms/constrain';
 
 describe('createInitialState', () => {
   it('should create initial state with defaults', () => {
@@ -182,5 +183,47 @@ describe('applyCropResize', () => {
     const state = createInitialState();
     const result = applyCropResize(state, 'se', -0.2, -0.3, 'square');
     expect(result.cropRect.width).toBeCloseTo(result.cropRect.height, 1);
+  });
+
+  // Anchor regression: a ratio-locked resize must keep the edge/corner
+  // diagonally opposite the dragged handle fixed. Before the fix,
+  // enforceAspectRatio recomputed the dependent dimension from the (x,y)
+  // origin, so dragging a top handle drifted the bottom edge.
+  it('keeps the bottom edge fixed when dragging the north handle (ratio-locked)', () => {
+    const state = createInitialState(); // 0.1,0.1,0.8,0.8 → bottom = 0.9
+    const r = applyCropResize(state, 'n', 0, 0.2, 'square').cropRect;
+    expect(r.y + r.height).toBeCloseTo(0.9); // bottom held
+    expect(r.x + r.width / 2).toBeCloseTo(0.5); // grew about the horizontal centre
+  });
+
+  it('keeps the opposite corner fixed when dragging the NE handle (ratio-locked)', () => {
+    const state = createInitialState(); // SW corner = (0.1, 0.9)
+    const r = applyCropResize(state, 'ne', 0.1, 0.2, 'square').cropRect;
+    expect(r.x).toBeCloseTo(0.1); // left held
+    expect(r.y + r.height).toBeCloseTo(0.9); // bottom held → SW corner fixed
+  });
+});
+
+describe('enforceAspectRatio anchoring', () => {
+  // When the ratio-derived dependent dimension would overflow the room past
+  // the pinned edge, the rect must SHRINK (ratio preserved) so the anchor
+  // still holds — it must not slide the whole rect via the trailing clamp.
+  it('holds the opposite corner when the square size must shrink to fit (NW drag)', () => {
+    // SE corner is the anchor at (0.9, 0.8); square height (0.9) overruns the
+    // 0.8 room above the bottom, so the rect must shrink to 0.8 × 0.8.
+    const r = enforceAspectRatio({ x: 0, y: 0.5, width: 0.9, height: 0.3 }, 1, 'nw', 1000, 1000, 20);
+    expect(r.width).toBeCloseTo(r.height); // ratio held (square)
+    expect(r.x + r.width).toBeCloseTo(0.9); // right edge held
+    expect(r.y + r.height).toBeCloseTo(0.8); // bottom edge held → SE corner fixed
+  });
+
+  // On a non-square image the ratio must survive: the old independent
+  // Math.min(…, 1) clamps capped one axis and broke a "square" into 1.6:1.
+  it('preserves the locked ratio on a non-square image (E drag, 2000x1000)', () => {
+    const r = enforceAspectRatio({ x: 0.1, y: 0.1, width: 0.8, height: 0.5 }, 1, 'e', 2000, 1000, 20);
+    expect(r.width * 2000).toBeCloseTo(r.height * 1000); // square in pixels
+    expect(r.x).toBeCloseTo(0.1); // left edge (anchor for E) held
+    expect(r.x + r.width).toBeLessThanOrEqual(1 + 1e-9);
+    expect(r.y + r.height).toBeLessThanOrEqual(1 + 1e-9);
   });
 });

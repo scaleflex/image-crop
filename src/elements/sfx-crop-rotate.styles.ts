@@ -65,6 +65,11 @@ export const sfxCropRotateStyles = css`
     left: 0;
     height: 100%;
     will-change: transform;
+    /* Dark halo wrapping every tick so the white ink stays legible over a
+       bright photo. Applied to the strip so all ticks share one shadow pass. */
+    filter:
+      drop-shadow(0 0 1px var(--sfx-cr-ruler-halo, oklch(0 0 0 / 0.85)))
+      drop-shadow(0 0 2px var(--sfx-cr-ruler-halo, oklch(0 0 0 / 0.85)));
   }
 
   .sfx-cr-rotate-tick {
@@ -76,14 +81,14 @@ export const sfxCropRotateStyles = css`
     margin-top: -4px;
     border-radius: 0.5px;
     background: var(--sfx-cr-ruler-ink, var(--sfx-cr-text));
-    opacity: 0.7;
+    opacity: 0.9;
   }
   .sfx-cr-rotate-tick--major {
     width: 1px;
     height: 12px;
     margin-left: -0.5px;
     margin-top: -6px;
-    opacity: 0.9;
+    opacity: 1;
   }
 
   /* Fixed center indicator — single vertical line, slightly taller than ticks. */
@@ -97,6 +102,10 @@ export const sfxCropRotateStyles = css`
     background: var(--sfx-cr-ruler-ink, var(--sfx-cr-text));
     border-radius: 2px;
     pointer-events: none;
+    /* Same dark halo as the ticks so the centre marker stays visible. */
+    filter:
+      drop-shadow(0 0 1px var(--sfx-cr-ruler-halo, oklch(0 0 0 / 0.85)))
+      drop-shadow(0 0 2px var(--sfx-cr-ruler-halo, oklch(0 0 0 / 0.85)));
   }
 
   .sfx-cr-rotate-value {
@@ -106,6 +115,10 @@ export const sfxCropRotateStyles = css`
     text-align: center;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.2px;
+    /* Dark halo so the degree readout reads over both bright and dark photos. */
+    text-shadow:
+      0 0 2px var(--sfx-cr-ruler-halo, oklch(0 0 0 / 0.85)),
+      0 1px 2px var(--sfx-cr-ruler-halo, oklch(0 0 0 / 0.85));
   }
 
   @media (max-width: 768px) {
