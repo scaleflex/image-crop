@@ -4,7 +4,11 @@
   "description": "@scaleflex/crop - Vanilla JavaScript Example",
   "main": "index.html",
   "scripts": {
-    "start": "npx serve . -l 5175"
+    "dev": "serve . -l 5175",
+    "start": "serve . -l 5175"
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
   },
   "keywords": ["crop", "image-editor", "scaleflex", "web-component"],
   "license": "MIT"

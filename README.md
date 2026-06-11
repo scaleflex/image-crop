@@ -30,8 +30,8 @@
 
 <p align="center">
   <a href="https://scaleflex.github.io/image-crop/">View Demo</a> ·
-  <a href="https://codesandbox.io/p/sandbox/github/scaleflex/image-crop/tree/master/codesandbox/react">React CodeSandbox</a> ·
-  <a href="https://codesandbox.io/p/sandbox/github/scaleflex/image-crop/tree/master/codesandbox/vanilla">Vanilla CodeSandbox</a> ·
+  <a href="https://stackblitz.com/github/scaleflex/image-crop/tree/master/codesandbox/react">React Sandbox</a> ·
+  <a href="https://stackblitz.com/github/scaleflex/image-crop/tree/master/codesandbox/vanilla">Vanilla Sandbox</a> ·
   <a href="https://github.com/scaleflex/image-crop/issues">Report Bug</a>
 </p>
 
