@@ -1,5 +1,7 @@
 dist/
 dist-demo/
+dist-cdn/
+plans/
 node_modules/
 coverage/
 .DS_Store

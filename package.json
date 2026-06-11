@@ -40,6 +40,8 @@
     "build:bundle": "vite build --config config/vite.config.ts",
     "build:react": "vite build --config config/vite.react.config.ts",
     "build:demo": "vite build --config config/vite.demo.config.ts",
+    "build:cdn": "vite build --config config/vite.cdn.config.ts",
+    "release": "node scripts/release-cdn.mjs plugin",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
