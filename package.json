@@ -1,6 +1,6 @@
 {
   "name": "@scaleflex/image-crop",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Interactive image crop tool with rotation, flip, zoom and shape selection — Scaleflex Web Component",
   "license": "MIT",
   "author": "Scaleflex",
