@@ -5,7 +5,7 @@ All notable changes to `@scaleflex/image-crop` (formerly `js-cloudimage-crop`).
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.3] — 2026-06-12
 
 ### Fixed
 
