@@ -1,13 +1,13 @@
 # Changelog
 
-All notable changes to `@scaleflex/crop` (formerly `js-cloudimage-crop`).
+All notable changes to `@scaleflex/image-crop` (formerly `js-cloudimage-crop`).
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.0.0] — 2026-04-21
 
-Major release. The package is renamed to `@scaleflex/crop` and rewritten on
+Major release. The package is renamed to `@scaleflex/image-crop` and rewritten on
 top of Lit 3 Web Components, matching the architecture of
 [`@scaleflex/uploader`](https://www.npmjs.com/package/@scaleflex/uploader) and
 [`@scaleflex/asset-picker`](https://www.npmjs.com/package/@scaleflex/asset-picker).
@@ -18,10 +18,10 @@ top of Lit 3 Web Components, matching the architecture of
 - Sub-elements `<sfx-crop-canvas>`, `<sfx-crop-toolbar>`, `<sfx-crop-zoom>`,
   `<sfx-crop-rotate>`, `<sfx-crop-shapes>`, each with its own shadow DOM and
   `static styles`.
-- Side-effect registration entry `@scaleflex/crop/define` — importing it
+- Side-effect registration entry `@scaleflex/image-crop/define` — importing it
   registers every tag idempotently (safe under React StrictMode and repeated
   imports).
-- React wrapper at `@scaleflex/crop/react` — `<SfxCrop>` (`forwardRef`) and
+- React wrapper at `@scaleflex/image-crop/react` — `<SfxCrop>` (`forwardRef`) and
   `useSfxCrop()` hook. Auto-imports `../define` on module load (SSR-guarded).
 - `::part(container|canvas-host|toolbar|zoom|loading|error)` for scoped
   light-DOM styling.
@@ -40,14 +40,14 @@ top of Lit 3 Web Components, matching the architecture of
 
 ### Changed (breaking)
 
-- **Package rename**: `js-cloudimage-crop` → `@scaleflex/crop`. Update your
+- **Package rename**: `js-cloudimage-crop` → `@scaleflex/image-crop`. Update your
   `package.json` dependency. CDN users: switch from the `unpkg` UMD build to
-  ESM via `https://esm.sh/@scaleflex/crop/define`.
+  ESM via `https://esm.sh/@scaleflex/image-crop/define`.
 - **Exports map** is now the sole entry contract — `main`/`module`/`unpkg`
   fields are gone. Consume via subpath imports:
-  - `@scaleflex/crop` — types + helpers, no side effects
-  - `@scaleflex/crop/define` — registers custom elements
-  - `@scaleflex/crop/react` — React wrapper (also auto-registers)
+  - `@scaleflex/image-crop` — types + helpers, no side effects
+  - `@scaleflex/image-crop/define` — registers custom elements
+  - `@scaleflex/image-crop/react` — React wrapper (also auto-registers)
 - **UMD build dropped.** ESM-only distribution via npm/CDN. Use `esm.sh` /
   `unpkg` with `?module` for CDN consumption.
 - **API surface** replaced — see migration guide below. In particular:
@@ -91,7 +91,7 @@ top of Lit 3 Web Components, matching the architecture of
 
 - Pointer-capture and non-passive `wheel` listeners stay stable across Lit
   renders — the `<canvas>` node is rendered once and never recreated.
-- `<sfx-crop>` guards against `@scaleflex/crop/define` missing with a branded
+- `<sfx-crop>` guards against `@scaleflex/image-crop/define` missing with a branded
   error instead of a cryptic null-dereference.
 - Fast mount/unmount (StrictMode, router transitions) no longer leaks a
   controller for a detached host — `firstUpdated` re-checks `isConnected`
@@ -110,7 +110,7 @@ top of Lit 3 Web Components, matching the architecture of
 
 ```bash
 npm remove js-cloudimage-crop
-npm install @scaleflex/crop
+npm install @scaleflex/image-crop
 ```
 
 ### Replace the JS entry
@@ -150,7 +150,7 @@ npm install @scaleflex/crop
 ></sfx-crop>
 
 <script type="module">
-  import '@scaleflex/crop/define';
+  import '@scaleflex/image-crop/define';
 
   const viewer = document.getElementById('viewer');
   viewer.addEventListener('sfx-crop-change', (e) => console.log(e.detail));
@@ -223,7 +223,7 @@ import { CICropViewer } from 'js-cloudimage-crop/react';
 **After (2.0)**:
 
 ```tsx
-import { SfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+import { SfxCrop, type SfxCropElement } from '@scaleflex/image-crop/react';
 
 const ref = useRef<SfxCropElement>(null);
 
@@ -263,7 +263,7 @@ same use case — no JS call needed beyond importing `/define`.
 UMD is dropped. The recommended CDN-over-ESM path:
 
 ```html
-<script type="module" src="https://esm.sh/@scaleflex/crop/define"></script>
+<script type="module" src="https://esm.sh/@scaleflex/image-crop/define"></script>
 <sfx-crop src="/photo.jpg"></sfx-crop>
 ```
 

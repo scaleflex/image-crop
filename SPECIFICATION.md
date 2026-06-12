@@ -1,4 +1,4 @@
-# @scaleflex/crop — Specification
+# @scaleflex/image-crop — Specification
 
 Interactive image crop tool with rotation, flip, zoom, and shape constraints.
 Inspired by Pintura's crop interface style. Part of the Scaleflex js-cloudimage-* family.
@@ -564,7 +564,7 @@ Conversion functions: `imageToCanvas()`, `canvasToImage()`, `normalizedToCanvas(
 
 ```html
 <script type="module">
-  import '@scaleflex/crop/define';
+  import '@scaleflex/image-crop/define';
 </script>
 
 <sfx-crop
@@ -718,7 +718,7 @@ type CropIconOverrides = Partial<{
 }>;
 ```
 
-### 5.6 React binding (`@scaleflex/crop/react`)
+### 5.6 React binding (`@scaleflex/image-crop/react`)
 
 Three tiers, all exported from the same entry:
 
@@ -733,7 +733,7 @@ import {
   type SfxCropElement,
   type SfxCropProps,
   type SfxCropSaveDetail,
-} from '@scaleflex/crop/react';
+} from '@scaleflex/image-crop/react';
 
 // 1) Declarative component
 const ref = useRef<SfxCropElement>(null);
@@ -1161,7 +1161,7 @@ toTransformParams(): {
 ## 12. Project Structure
 
 ```
-@scaleflex/crop/
+@scaleflex/image-crop/
 ├── package.json
 ├── tsconfig.json                  # experimentalDecorators + useDefineForClassFields:false
 ├── tsconfig.build.json
@@ -1243,9 +1243,9 @@ Scaleflex packages.
 
 | Entry | File(s) |
 |---|---|
-| `@scaleflex/crop` (types + helpers, no side effects) | `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts` |
-| `@scaleflex/crop/define` (side-effect: registers all six tags) | `dist/define.js`, `dist/define.cjs`, `dist/define.d.ts` |
-| `@scaleflex/crop/react` (forwardRef component + hook) | `dist/react/index.js`, `dist/react/index.cjs`, `dist/react/index.d.ts` |
+| `@scaleflex/image-crop` (types + helpers, no side effects) | `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts` |
+| `@scaleflex/image-crop/define` (side-effect: registers all six tags) | `dist/define.js`, `dist/define.cjs`, `dist/define.d.ts` |
+| `@scaleflex/image-crop/react` (forwardRef component + hook) | `dist/react/index.js`, `dist/react/index.cjs`, `dist/react/index.d.ts` |
 | Shared chunk (Lit elements, controller, transforms) | `dist/chunks/sfx-crop-*.js|cjs` |
 
 ### 13.2 Usage Examples
@@ -1253,13 +1253,13 @@ Scaleflex packages.
 **CDN (ESM):**
 ```html
 <script type="module"
-        src="https://cdn.jsdelivr.net/npm/@scaleflex/crop/dist/define.js"></script>
+        src="https://cdn.jsdelivr.net/npm/@scaleflex/image-crop/dist/define.js"></script>
 <sfx-crop src="/photos/landscape.jpg" crop-shape="16:9" theme="light"></sfx-crop>
 ```
 
 **ESM:**
 ```ts
-import '@scaleflex/crop/define';
+import '@scaleflex/image-crop/define';
 
 const crop = document.getElementById('crop');
 crop.addEventListener('sfx-crop-change', (e) => console.log(e.detail));
@@ -1269,7 +1269,7 @@ const blob = await crop.toBlob('image/jpeg', 0.9);
 
 **React:**
 ```tsx
-import { SfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+import { SfxCrop, type SfxCropElement } from '@scaleflex/image-crop/react';
 
 function App() {
   const ref = useRef<SfxCropElement>(null);

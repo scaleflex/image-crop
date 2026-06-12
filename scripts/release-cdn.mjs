@@ -13,15 +13,15 @@ run({
   artifacts: {
     plugin: {
       versionKey: "version",
-      cdnFileName: "crop.min.js",
+      cdnFileName: "image-crop.min.js",
       // cdnFolder comes from FILEROBOT_CDN_FOLDER in .env.local
       build(version) {
         execSync("npm run build:cdn", { stdio: "inherit", cwd: root });
-        return resolve(root, "dist-cdn/crop.min.js");
+        return resolve(root, "dist-cdn/image-crop.min.js");
       },
     },
   },
-  updateFiles: ["README.md"],
+  updateFiles: ["README.md", "codesandbox/vanilla/index.html"],
   // crop lives on GitHub only. Upstream of `master` is `origin` (personal);
   // also push the tag to the canonical company repo (`scaleflex` remote).
   extraRemotes: ["scaleflex"],

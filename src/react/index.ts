@@ -1,5 +1,5 @@
 /**
- * React entry for `@scaleflex/crop/react`.
+ * React entry for `@scaleflex/image-crop/react`.
  *
  * Exports:
  *   - `SfxCrop` — forwardRef component rendering `<sfx-crop>`
@@ -30,7 +30,7 @@ export type {
 } from './use-sfx-crop-controller';
 
 // Headless primitives re-exported so React consumers don't need to reach
-// into the root `@scaleflex/crop` package for types and the factory.
+// into the root `@scaleflex/image-crop` package for types and the factory.
 export { createCropController, DEFAULT_CONFIG, mergeConfig } from '../index';
 export type {
   CropController,

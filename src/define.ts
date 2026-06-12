@@ -1,5 +1,5 @@
 /**
- * Side-effect entry for `@scaleflex/crop/define`.
+ * Side-effect entry for `@scaleflex/image-crop/define`.
  *
  * Importing this module registers all six public custom elements:
  *   - <sfx-crop>          — main editor host

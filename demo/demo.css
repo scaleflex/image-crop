@@ -1,5 +1,5 @@
 /* ======================================================================
- *  @scaleflex/crop — demo site chrome
+ *  @scaleflex/image-crop — demo site chrome
  *  Dark glass topbar + white docs/examples + dark hero/footer, matching
  *  the visual language of scaleflex.github.io/uploader.
  * ==================================================================== */
@@ -414,7 +414,7 @@ kbd {
   background: var(--sf-primary, #155bcd);
   border-radius: 8px;
 }
-.demo-save-dl:hover { filter: brightness(1.08); }
+.demo-save-dl:hover { color: #fff; opacity: 0.8; }
 
 /* ======================================================================
  *  Main layout
@@ -1215,7 +1215,7 @@ kbd {
   grid-template-columns: 1.5fr repeat(3, 1fr);
   gap: 40px;
 }
-.demo-footer-brand img { display: block; height: 22px; margin-bottom: 14px; }
+.demo-footer-brand img { display: block; height: 26px; margin-bottom: 14px; }
 .demo-footer-brand p {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.5);
@@ -1225,13 +1225,14 @@ kbd {
 .demo-footer-col h4 {
   font-size: 13px;
   font-weight: 700;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.45);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin: 0 0 14px;
 }
 .demo-footer-col a {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
   align-items: center;
   gap: 6px;
   font-size: 14px;
@@ -1249,7 +1250,13 @@ kbd {
   border-top: 1px solid var(--sf-dark-border);
   font-size: 13px;
   color: rgba(255, 255, 255, 0.4);
+  text-align: center;
 }
+.demo-footer-bottom a {
+  color: var(--sf-primary-light);
+  transition: color 0.15s ease;
+}
+.demo-footer-bottom a:hover { color: var(--sf-primary-mid); }
 
 /* ======================================================================
  *  Docs / examples typography

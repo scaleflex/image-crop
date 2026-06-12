@@ -143,12 +143,12 @@ export class SfxCropElement extends SfxCropBaseElement {
   async firstUpdated(): Promise<void> {
     setupAria(this);
 
-    // Guard: if @scaleflex/crop/define wasn't imported, canvasHost will be an
+    // Guard: if @scaleflex/image-crop/define wasn't imported, canvasHost will be an
     // un-upgraded HTMLUnknownElement with no Lit lifecycle — bail with a
     // descriptive error rather than a cryptic "undefined.then" crash.
     if (!(this.canvasHost instanceof SfxCropCanvasElement)) {
       throw new Error(
-        "<sfx-crop>: custom elements not registered. Import '@scaleflex/crop/define' before using the tag.",
+        "<sfx-crop>: custom elements not registered. Import '@scaleflex/image-crop/define' before using the tag.",
       );
     }
 

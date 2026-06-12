@@ -1,5 +1,5 @@
 /**
- * Demo site for @scaleflex/crop.
+ * Demo site for @scaleflex/image-crop.
  *
  * Hash-routed SPA matching the shell of @scaleflex/uploader's demo site:
  *   #/                             landing
@@ -232,7 +232,7 @@ function renderHeader(currentPath: string): string {
           <a class="demo-topbar-chip" href="https://github.com/scaleflex/image-crop" target="_blank" rel="noopener" aria-label="GitHub repository">
             ${ICONS.github}<span>GitHub</span>
           </a>
-          <a class="demo-topbar-chip demo-topbar-chip--icon" href="https://www.npmjs.com/package/@scaleflex/crop" target="_blank" rel="noopener" aria-label="npm package">
+          <a class="demo-topbar-chip demo-topbar-chip--icon" href="https://www.npmjs.com/package/@scaleflex/image-crop" target="_blank" rel="noopener" aria-label="npm package">
             ${ICONS.npm}
           </a>
         </div>
@@ -283,31 +283,30 @@ function renderFooter(): string {
       <div class="demo-footer-main">
         <div class="demo-footer-brand">
           <a href="https://www.scaleflex.com" target="_blank" rel="noopener">
-            <img src="https://assets.scaleflex.com/Marketing/Logos/Scaleflex%20Logos/Logo%20Horizontal/scaleflex%20logo%20without%20tagline%20white%20text%20%28horizontal%29%20.png?vh=85bc00" alt="Scaleflex" height="22" />
+            <img src="https://assets.scaleflex.com/Marketing/Logos/Scaleflex%20Logos/Logo%20Horizontal/scaleflex%20logo%20without%20tagline%20white%20text%20%28horizontal%29%20.png?vh=85bc00" alt="Scaleflex" height="26" />
           </a>
-          <p>Image infrastructure for teams that ship.</p>
+          <p>Framework-agnostic image cropping for the modern web. Zero dependencies, fully accessible, endlessly customizable.</p>
         </div>
         <div class="demo-footer-col">
           <h4>Resources</h4>
+          <a href="https://github.com/scaleflex/image-crop" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://www.npmjs.com/package/@scaleflex/image-crop" target="_blank" rel="noopener">npm</a>
           <a href="#/docs/getting-started">Documentation</a>
-          <a href="#/examples/basic">Examples</a>
-          <a href="https://github.com/scaleflex/image-crop" target="_blank" rel="noopener">GitHub ${ICONS.external}</a>
-          <a href="https://www.npmjs.com/package/@scaleflex/crop" target="_blank" rel="noopener">npm ${ICONS.external}</a>
         </div>
         <div class="demo-footer-col">
-          <h4>Also by Scaleflex</h4>
-          <a href="https://www.npmjs.com/package/@scaleflex/uploader" target="_blank" rel="noopener">@scaleflex/uploader ${ICONS.external}</a>
-          <a href="https://www.npmjs.com/package/@scaleflex/asset-picker" target="_blank" rel="noopener">@scaleflex/asset-picker ${ICONS.external}</a>
-          <a href="https://github.com/scaleflex/filerobot-image-editor" target="_blank" rel="noopener">filerobot-image-editor ${ICONS.external}</a>
+          <h4>Examples</h4>
+          <a href="#/examples/basic">Vanilla Sandbox</a>
+          <a href="#/examples/react">React Sandbox</a>
+          <a href="#/">Visual Editor</a>
         </div>
         <div class="demo-footer-col">
-          <h4>Company</h4>
-          <a href="https://www.scaleflex.com" target="_blank" rel="noopener">About ${ICONS.external}</a>
-          <a href="https://www.scaleflex.com/en/contact" target="_blank" rel="noopener">Contact ${ICONS.external}</a>
+          <h4>Support</h4>
+          <a href="https://github.com/scaleflex/image-crop/issues" target="_blank" rel="noopener">Report an Issue</a>
+          <a href="https://www.scaleflex.com/en/contact" target="_blank" rel="noopener">Contact Us</a>
         </div>
       </div>
       <div class="demo-footer-bottom">
-        <span>© ${new Date().getFullYear()} Scaleflex. MIT license.</span>
+        <span>MIT License — Made with care by the <a href="https://www.scaleflex.com" target="_blank" rel="noopener">Scaleflex</a> team — Powered by <a href="https://www.cloudimage.io" target="_blank" rel="noopener">Cloudimage.io</a></span>
       </div>
     </footer>
   `;
@@ -345,7 +344,7 @@ function renderHome(): string {
     {
       icon: svg('<circle cx="12" cy="12" r="1.2"/><ellipse cx="12" cy="12" rx="10" ry="4.5"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(120 12 12)"/>'),
       title: 'React binding',
-      body: 'forwardRef wrapper and useSfxCrop() hook via @scaleflex/crop/react.',
+      body: 'forwardRef wrapper and useSfxCrop() hook via @scaleflex/image-crop/react.',
     },
     {
       icon: svg('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>'),
@@ -354,68 +353,9 @@ function renderHome(): string {
     },
   ];
 
-  const siblingSlides = [
-    {
-      title: '@scaleflex/<span class="demo-gradient-text">uploader</span>',
-      desc: 'Drag &amp; drop file uploader with 7 cloud providers, resumable uploads, and a polished UI that pairs with Crop.',
-      liveUrl: 'https://scaleflex.github.io/uploader/',
-      repoUrl: 'https://github.com/scaleflex/uploader',
-      visual: `
-        <svg viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg" class="demo-also-icon">
-          <rect x="4" y="4" width="172" height="172" rx="12" stroke="url(#also-grad-0)" stroke-width="2" opacity="0.3"/>
-          <rect x="24" y="40" width="132" height="100" rx="10" stroke="url(#also-grad-0)" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.5"/>
-          <path d="M90 60 L90 110" stroke="url(#also-grad-0)" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
-          <path d="M72 78 L90 60 L108 78" stroke="url(#also-grad-0)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
-          <circle cx="90" cy="90" r="60" stroke="url(#also-grad-0)" stroke-width="1" opacity="0.12"><animate attributeName="r" values="60;70;60" dur="4s" repeatCount="indefinite"/></circle>
-          <defs><linearGradient id="also-grad-0" x1="0" y1="0" x2="180" y2="180"><stop stop-color="#60a5fa"/><stop offset="1" stop-color="#00d4aa"/></linearGradient></defs>
-        </svg>
-      `,
-    },
-    {
-      title: '@scaleflex/<span class="demo-gradient-text">asset-picker</span>',
-      desc: 'Browse &amp; pick assets from your Scaleflex DAM with folder navigation, search, and drag-select — all out of the box.',
-      liveUrl: 'https://scaleflex.github.io/asset-picker/',
-      repoUrl: 'https://github.com/scaleflex/asset-picker',
-      visual: `
-        <svg viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg" class="demo-also-icon">
-          <rect x="4" y="4" width="172" height="172" rx="12" stroke="url(#also-grad-1)" stroke-width="2" opacity="0.3"/>
-          <rect x="20" y="30" width="60" height="55" rx="6" fill="url(#also-grad-1)" opacity="0.12" stroke="url(#also-grad-1)" stroke-width="1.2" stroke-opacity="0.4"/>
-          <rect x="100" y="30" width="60" height="55" rx="6" fill="url(#also-grad-1)" opacity="0.08" stroke="url(#also-grad-1)" stroke-width="1.2" stroke-opacity="0.4"/>
-          <rect x="20" y="100" width="60" height="55" rx="6" fill="url(#also-grad-1)" opacity="0.08" stroke="url(#also-grad-1)" stroke-width="1.2" stroke-opacity="0.4"/>
-          <rect x="100" y="100" width="60" height="55" rx="6" fill="url(#also-grad-1)" opacity="0.18" stroke="url(#also-grad-1)" stroke-width="2" stroke-opacity="0.7"/>
-          <circle cx="36" cy="48" r="5" fill="url(#also-grad-1)" opacity="0.7"/>
-          <path d="M20 75 L36 60 L55 70 L80 55 L80 85 L20 85 Z" fill="url(#also-grad-1)" opacity="0.25"/>
-          <circle cx="116" cy="48" r="5" fill="url(#also-grad-1)" opacity="0.7"/>
-          <path d="M100 75 L116 60 L135 70 L160 55 L160 85 L100 85 Z" fill="url(#also-grad-1)" opacity="0.18"/>
-          <path d="M122 130 L138 130 L130 142 Z" fill="url(#also-grad-1)" opacity="0.9"/>
-          <defs><linearGradient id="also-grad-1" x1="0" y1="0" x2="180" y2="180"><stop stop-color="#60a5fa"/><stop offset="1" stop-color="#00d4aa"/></linearGradient></defs>
-        </svg>
-      `,
-    },
-    {
-      title: '<span class="demo-gradient-text">filerobot</span>-image-editor',
-      desc: 'Full canvas-based editor with filters, adjust, annotations and stickers — when cropping alone isn&rsquo;t enough.',
-      liveUrl: 'https://scaleflex.github.io/filerobot-image-editor/',
-      repoUrl: 'https://github.com/scaleflex/filerobot-image-editor',
-      visual: `
-        <svg viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg" class="demo-also-icon">
-          <rect x="4" y="4" width="172" height="172" rx="12" stroke="url(#also-grad-2)" stroke-width="2" opacity="0.3"/>
-          <path d="M90 30 C60 30 36 54 36 84 C36 100 48 112 64 112 C72 112 76 108 76 102 C76 98 74 96 74 92 C74 86 78 82 84 82 L98 82 C118 82 134 66 134 46 C134 36 122 30 90 30 Z" fill="url(#also-grad-2)" opacity="0.18" stroke="url(#also-grad-2)" stroke-width="1.5" stroke-opacity="0.5"/>
-          <circle cx="70" cy="56" r="6" fill="url(#also-grad-2)" opacity="0.9"/>
-          <circle cx="108" cy="50" r="6" fill="url(#also-grad-2)" opacity="0.7"/>
-          <circle cx="122" cy="72" r="6" fill="url(#also-grad-2)" opacity="0.5"/>
-          <circle cx="60" cy="82" r="6" fill="url(#also-grad-2)" opacity="0.4"/>
-          <path d="M80 118 L114 150 L132 132 L98 100 Z" fill="url(#also-grad-2)" opacity="0.22" stroke="url(#also-grad-2)" stroke-width="1.5" stroke-opacity="0.6"/>
-          <path d="M70 108 L82 120" stroke="url(#also-grad-2)" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
-          <defs><linearGradient id="also-grad-2" x1="0" y1="0" x2="180" y2="180"><stop stop-color="#60a5fa"/><stop offset="1" stop-color="#00d4aa"/></linearGradient></defs>
-        </svg>
-      `,
-    },
-  ];
-
-  const installSnippet = `npm install @scaleflex/crop`;
+  const installSnippet = `npm install @scaleflex/image-crop`;
   const esmSnippet = `<script type="module">
-  import '@scaleflex/crop/define';
+  import '@scaleflex/image-crop/define';
 </script>
 
 <sfx-crop
@@ -423,7 +363,7 @@ function renderHome(): string {
   crop-shape="free"
   theme="light"
 ></sfx-crop>`;
-  const reactSnippet = `import { SfxCrop } from '@scaleflex/crop/react';
+  const reactSnippet = `import { SfxCrop } from '@scaleflex/image-crop/react';
 
 export function Editor() {
   return (
@@ -441,14 +381,14 @@ export function Editor() {
       <div class="demo-hero-inner">
         <div class="demo-hero-badge">
           <span class="demo-hero-badge-dot"></span>
-          @scaleflex/crop
+          @scaleflex/image-crop
         </div>
-        <h1 class="demo-hero-title"><span class="demo-gradient-text">Crop</span></h1>
+        <h1 class="demo-hero-title">Image <span class="demo-gradient-text">Crop</span></h1>
         <p class="demo-hero-sub">Framework-agnostic Web Component for interactive image cropping — rotate, flip, zoom, and shape presets in a single <code>&lt;sfx-crop&gt;</code> tag.</p>
         <div class="demo-hero-actions">
           <a class="demo-btn demo-btn--primary" href="#quick-start">Get started ${ICONS.arrow}</a>
           <a class="demo-btn demo-btn--glass" href="https://github.com/scaleflex/image-crop" target="_blank" rel="noopener">${ICONS.github} GitHub</a>
-          <a class="demo-btn demo-btn--glass" href="https://www.npmjs.com/package/@scaleflex/crop" target="_blank" rel="noopener">${ICONS.npm} npm</a>
+          <a class="demo-btn demo-btn--glass" href="https://www.npmjs.com/package/@scaleflex/image-crop" target="_blank" rel="noopener">${ICONS.npm} npm</a>
         </div>
         <div class="demo-hero-meta">
           <span>Web Component</span>
@@ -495,8 +435,8 @@ export function Editor() {
               <h3>Install</h3>
             </div>
             <div class="demo-step-code">
-              <code>npm install @scaleflex/crop</code>
-              <button class="demo-step-copy" data-copy-text="npm install @scaleflex/crop" aria-label="Copy">${ICONS.copy}</button>
+              <code>npm install @scaleflex/image-crop</code>
+              <button class="demo-step-copy" data-copy-text="npm install @scaleflex/image-crop" aria-label="Copy">${ICONS.copy}</button>
             </div>
           </div>
           <div class="demo-quick-start-step">
@@ -505,8 +445,8 @@ export function Editor() {
               <h3>Import</h3>
             </div>
             <div class="demo-step-code">
-              <code>import '@scaleflex/crop/define';</code>
-              <button class="demo-step-copy" data-copy-text="import '@scaleflex/crop/define';" aria-label="Copy">${ICONS.copy}</button>
+              <code>import '@scaleflex/image-crop/define';</code>
+              <button class="demo-step-copy" data-copy-text="import '@scaleflex/image-crop/define';" aria-label="Copy">${ICONS.copy}</button>
             </div>
           </div>
           <div class="demo-quick-start-step">
@@ -525,8 +465,8 @@ export function Editor() {
               <h3>Add script</h3>
             </div>
             <div class="demo-step-code">
-              <code>&lt;script type="module" src="https://esm.sh/@scaleflex/crop/define"&gt;&lt;/script&gt;</code>
-              <button class="demo-step-copy" data-copy-text='<script type="module" src="https://esm.sh/@scaleflex/crop/define"></script>' aria-label="Copy">${ICONS.copy}</button>
+              <code>&lt;script type="module" src="https://esm.sh/@scaleflex/image-crop/define"&gt;&lt;/script&gt;</code>
+              <button class="demo-step-copy" data-copy-text='<script type="module" src="https://esm.sh/@scaleflex/image-crop/define"></script>' aria-label="Copy">${ICONS.copy}</button>
             </div>
           </div>
           <div class="demo-quick-start-step">
@@ -561,32 +501,6 @@ export function Editor() {
           `).join('')}
         </div>
       </div>
-    </section>
-
-    <section class="demo-also demo-siblings" id="also-slider">
-      <div class="demo-also-slides">
-        ${siblingSlides.map((s, i) => `
-          <div class="demo-also-slide${i === 0 ? ' demo-also-slide--active' : ''}" data-slide="${i}">
-            <div class="demo-also-inner">
-              <div class="demo-also-content">
-                <div class="demo-section-label">Also by Scaleflex</div>
-                <h3 class="demo-also-title">${s.title}</h3>
-                <p class="demo-also-desc">${s.desc}</p>
-                <div class="demo-also-actions">
-                  <a class="demo-btn demo-btn--primary demo-btn--small" href="${s.liveUrl}" target="_blank" rel="noopener">
-                    Live demo ${ICONS.arrow}
-                  </a>
-                  <a class="demo-btn demo-btn--glass demo-btn--small" href="${s.repoUrl}" target="_blank" rel="noopener">
-                    ${ICONS.github} GitHub
-                  </a>
-                </div>
-              </div>
-              <div class="demo-also-visual">${s.visual}</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="demo-also-dots" id="also-dots"></div>
     </section>
   `;
 }
@@ -681,68 +595,6 @@ function hydrateHome(root: HTMLElement): void {
       });
     });
   });
-
-  // "Also by Scaleflex" carousel
-  const slides = root.querySelectorAll<HTMLElement>('.demo-also-slide');
-  const dotsContainer = root.querySelector<HTMLElement>('#also-dots');
-  if (slides.length > 0 && dotsContainer) {
-    let current = 0;
-    let animating = false;
-    let timer: ReturnType<typeof setInterval>;
-
-    const clearAnim = (el: HTMLElement) => {
-      el.classList.remove(
-        'demo-also-slide--enter-right',
-        'demo-also-slide--enter-left',
-        'demo-also-slide--leave-left',
-        'demo-also-slide--leave-right',
-      );
-    };
-
-    const goTo = (index: number) => {
-      if (index === current || animating) return;
-      animating = true;
-      const forward = index > current || (current === slides.length - 1 && index === 0);
-      const prev = slides[current];
-      const next = slides[index];
-
-      clearAnim(prev);
-      prev.classList.remove('demo-also-slide--active');
-      prev.classList.add(forward ? 'demo-also-slide--leave-left' : 'demo-also-slide--leave-right');
-
-      clearAnim(next);
-      next.classList.add(forward ? 'demo-also-slide--enter-right' : 'demo-also-slide--enter-left');
-
-      next.addEventListener('animationend', function handler() {
-        next.removeEventListener('animationend', handler);
-        clearAnim(prev);
-        clearAnim(next);
-        next.classList.add('demo-also-slide--active');
-        animating = false;
-      });
-
-      current = index;
-      dotsContainer.querySelectorAll('.demo-also-dot').forEach((d, i) => {
-        d.classList.toggle('demo-also-dot--active', i === current);
-      });
-      resetTimer();
-    };
-
-    const resetTimer = () => {
-      clearInterval(timer);
-      timer = setInterval(() => goTo((current + 1) % slides.length), 6000);
-    };
-
-    for (let i = 0; i < slides.length; i++) {
-      const dot = document.createElement('button');
-      dot.className = `demo-also-dot${i === 0 ? ' demo-also-dot--active' : ''}`;
-      dot.setAttribute('aria-label', `Slide ${i + 1}`);
-      dot.addEventListener('click', () => goTo(i));
-      dotsContainer.appendChild(dot);
-    }
-
-    resetTimer();
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -768,14 +620,14 @@ function renderDocGettingStarted(): string {
     `
       <h2>Install</h2>
       ${tabbedCode([
-        { label: 'npm',  code: 'npm install @scaleflex/crop',  lang: 'bash' },
-        { label: 'pnpm', code: 'pnpm add @scaleflex/crop',     lang: 'bash' },
-        { label: 'yarn', code: 'yarn add @scaleflex/crop',     lang: 'bash' },
+        { label: 'npm',  code: 'npm install @scaleflex/image-crop',  lang: 'bash' },
+        { label: 'pnpm', code: 'pnpm add @scaleflex/image-crop',     lang: 'bash' },
+        { label: 'yarn', code: 'yarn add @scaleflex/image-crop',     lang: 'bash' },
       ])}
 
       <h2>Register the custom element</h2>
       <p>A single side-effect import registers <code>&lt;sfx-crop&gt;</code> and its sub-elements (<code>sfx-crop-canvas</code>, <code>sfx-crop-toolbar</code>, <code>sfx-crop-zoom</code>, <code>sfx-crop-rotate</code>, <code>sfx-crop-shapes</code>). The import is idempotent — safe under React StrictMode and repeated module evaluations.</p>
-      ${codeBlock(`import '@scaleflex/crop/define';`, 'typescript')}
+      ${codeBlock(`import '@scaleflex/image-crop/define';`, 'typescript')}
 
       <h2>Use it</h2>
       ${tabbedCode([
@@ -784,7 +636,7 @@ function renderDocGettingStarted(): string {
   crop-shape="16:9"
   theme="light"
 ></sfx-crop>`, lang: 'markup' },
-        { label: 'React', code: `import { SfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+        { label: 'React', code: `import { SfxCrop, type SfxCropElement } from '@scaleflex/image-crop/react';
 import { useRef } from 'react';
 
 export function Editor() {
@@ -800,7 +652,7 @@ export function Editor() {
     />
   );
 }`, lang: 'tsx' },
-        { label: 'CDN', code: `<script type="module" src="https://esm.sh/@scaleflex/crop/define"></script>
+        { label: 'CDN', code: `<script type="module" src="https://esm.sh/@scaleflex/image-crop/define"></script>
 
 <sfx-crop src="/photo.jpg" crop-shape="16:9"></sfx-crop>`, lang: 'markup' },
       ])}
@@ -1048,7 +900,7 @@ document.getElementById('save').onclick = () => crop.save();`, 'typescript')}
       </div>
 
       <h3>Ref-based imperative usage</h3>
-      ${codeBlock(`import { SfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+      ${codeBlock(`import { SfxCrop, type SfxCropElement } from '@scaleflex/image-crop/react';
 import { useRef } from 'react';
 
 export function Editor() {
@@ -1065,7 +917,7 @@ export function Editor() {
 
       <h3>Hook alternative — <code>useSfxCrop</code></h3>
       <p>For consumers that render <code>&lt;sfx-crop&gt;</code> manually (outside React's declarative tree) and just want a typed handle:</p>
-      ${codeBlock(`import { useSfxCrop } from '@scaleflex/crop/react';
+      ${codeBlock(`import { useSfxCrop } from '@scaleflex/image-crop/react';
 
 const { ref, save, reset, rotateLeft } = useSfxCrop();
 
@@ -1073,7 +925,7 @@ return <sfx-crop ref={ref} src="/photo.jpg" />;`, 'tsx')}
 
       <h3>Headless — <code>useSfxCropController</code></h3>
       <p>Full headless control: the hook owns the controller and returns <code>canvasRef</code> / <code>containerRef</code> / <code>state</code> / <code>actions</code> / <code>api</code> so you can render your own canvas, toolbar, and markup while re-using the engine.</p>
-      ${codeBlock(`import { useSfxCropController } from '@scaleflex/crop/react';
+      ${codeBlock(`import { useSfxCropController } from '@scaleflex/image-crop/react';
 
 const { canvasRef, containerRef, state, actions } = useSfxCropController({
   src: '/photo.jpg',
@@ -1234,7 +1086,7 @@ sfx-crop::part(toolbar)     { box-shadow: 0 8px 24px rgba(0,0,0,.2); }`, 'css')}
 function renderDocTypes(): string {
   return docPage(
     'TypeScript types',
-    'Public types re-exported from <code>@scaleflex/crop</code> and <code>@scaleflex/crop/react</code>.',
+    'Public types re-exported from <code>@scaleflex/image-crop</code> and <code>@scaleflex/image-crop/react</code>.',
     `
       <h2>Imports</h2>
       ${codeBlock(`import type {
@@ -1250,7 +1102,7 @@ function renderDocTypes(): string {
   CropIconOverrides,
   Point,
   Size,
-} from '@scaleflex/crop';
+} from '@scaleflex/image-crop';
 
 import type {
   SfxCropProps,
@@ -1258,7 +1110,7 @@ import type {
   UseSfxCropReturn,
   UseSfxCropControllerOptions,
   UseSfxCropControllerReturn,
-} from '@scaleflex/crop/react';`, 'typescript')}
+} from '@scaleflex/image-crop/react';`, 'typescript')}
 
       <h2>CropShapeName</h2>
       <p>Union of built-in presets plus any consumer-supplied <code>"W:H"</code> string — autocomplete stays on the built-ins while ad-hoc ratios like <code>"2.35:1"</code> pass through.</p>
@@ -1374,7 +1226,7 @@ function renderExampleBasic(): string {
 
       ${tabbedCode([
         { label: 'HTML', code: `<script type="module">
-  import '@scaleflex/crop/define';
+  import '@scaleflex/image-crop/define';
 </script>
 
 <sfx-crop
@@ -1382,7 +1234,7 @@ function renderExampleBasic(): string {
   crop-shape="free"
   theme="light"
 ></sfx-crop>`, lang: 'markup' },
-        { label: 'React', code: `import { SfxCrop } from '@scaleflex/crop/react';
+        { label: 'React', code: `import { SfxCrop } from '@scaleflex/image-crop/react';
 
 export function Editor() {
   return <SfxCrop src="/photo.jpg" cropShape="free" theme="light" />;
@@ -1688,7 +1540,7 @@ function renderExampleReact(): string {
     `
       <h2>Component</h2>
       ${codeBlock(`import { useRef } from 'react';
-import { SfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+import { SfxCrop, type SfxCropElement } from '@scaleflex/image-crop/react';
 
 export function Editor() {
   const ref = useRef<SfxCropElement>(null);
@@ -1714,7 +1566,7 @@ export function Editor() {
 }`, 'tsx')}
 
       <h2>Hook</h2>
-      ${codeBlock(`import { useSfxCrop } from '@scaleflex/crop/react';
+      ${codeBlock(`import { useSfxCrop } from '@scaleflex/image-crop/react';
 
 export function Editor() {
   const crop = useSfxCrop();
@@ -2001,7 +1853,7 @@ function renderExampleFixed(): string {
   variant="fixed"
   crop-shape="1:1"
 ></sfx-crop>`, lang: 'markup' },
-        { label: 'React', code: `import { SfxCrop } from '@scaleflex/crop/react';
+        { label: 'React', code: `import { SfxCrop } from '@scaleflex/image-crop/react';
 
 <SfxCrop
   src="/photo.jpg"

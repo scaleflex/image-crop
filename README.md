@@ -4,21 +4,21 @@
   </a>
 </p>
 
-<h1 align="center">Cloudimage Crop</h1>
+<h1 align="center">Scaleflex Image Crop</h1>
 
 <p align="center">
   <strong>An interactive image-crop editor web component — rotation, fine tilt, flip, zoom and shape selection</strong>
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@scaleflex/crop">
-    <img src="https://img.shields.io/npm/v/@scaleflex/crop.svg" alt="Release">
+  <a href="https://www.npmjs.com/package/@scaleflex/image-crop">
+    <img src="https://img.shields.io/npm/v/@scaleflex/image-crop.svg" alt="Release">
   </a>
-  <a href="https://bundlephobia.com/package/@scaleflex/crop">
-    <img src="https://img.shields.io/bundlephobia/minzip/@scaleflex/crop.svg" alt="Size">
+  <a href="https://bundlephobia.com/package/@scaleflex/image-crop">
+    <img src="https://img.shields.io/bundlephobia/minzip/@scaleflex/image-crop.svg" alt="Size">
   </a>
-  <a href="https://www.npmjs.com/package/@scaleflex/crop">
-    <img src="https://img.shields.io/npm/dm/@scaleflex/crop.svg" alt="Downloads">
+  <a href="https://www.npmjs.com/package/@scaleflex/image-crop">
+    <img src="https://img.shields.io/npm/dm/@scaleflex/image-crop.svg" alt="Downloads">
   </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
@@ -56,7 +56,7 @@
 
 ## Overview
 
-`@scaleflex/crop` ships `<sfx-crop>`, a Lit-based custom element that renders a canvas-backed crop editor with rotation, fine tilt (±45°), horizontal/vertical flip, zoom, pan, and a configurable shape palette (free, square, circle, rounded-rect, plus arbitrary `W:H` ratio strings). The same engine is exposed three ways:
+`@scaleflex/image-crop` ships `<sfx-crop>`, a Lit-based custom element that renders a canvas-backed crop editor with rotation, fine tilt (±45°), horizontal/vertical flip, zoom, pan, and a configurable shape palette (free, square, circle, rounded-rect, plus arbitrary `W:H` ratio strings). The same engine is exposed three ways:
 
 - a ready-to-mount custom element (`<sfx-crop>`);
 - a React component (`<SfxCrop>`) plus hooks (`useSfxCrop`, `useSfxCropController`);
@@ -82,11 +82,11 @@ Modern evergreen browsers with Canvas 2D, Pointer Events, ResizeObserver, CSS co
 ### npm / yarn / pnpm
 
 ```bash
-npm install @scaleflex/crop
+npm install @scaleflex/image-crop
 # or
-yarn add @scaleflex/crop
+yarn add @scaleflex/image-crop
 # or
-pnpm add @scaleflex/crop
+pnpm add @scaleflex/image-crop
 ```
 
 ### CDN
@@ -95,7 +95,7 @@ The official Scaleflex CDN serves a single self-contained bundle that registers
 `<sfx-crop>` on load (plain `<script>`, no build step):
 
 ```html
-<script src="https://cdn.scaleflex.com/crop/2.0.1/crop.min.js"></script>
+<script src="https://cdn.scaleflex.com/image-crop/2.0.1/image-crop.min.js"></script>
 ```
 
 Or load the ESM build straight from npm via jsDelivr's auto-bundling `+esm`
@@ -103,16 +103,16 @@ endpoint (resolves `lit` for the browser):
 
 ```html
 <script type="module"
-        src="https://cdn.jsdelivr.net/npm/@scaleflex/crop/dist/define.js/+esm"></script>
+        src="https://cdn.jsdelivr.net/npm/@scaleflex/image-crop/dist/define.js/+esm"></script>
 ```
 
 ### Package exports
 
 | Specifier | Purpose |
 |---|---|
-| `@scaleflex/crop`         | Side-effect-free entry. Exports `SfxCropElement`, `createCropController`, `mergeConfig`, `DEFAULT_CONFIG`, and all public types. |
-| `@scaleflex/crop/define`  | Side-effectful — registers the `<sfx-crop>` custom element. Import once at bootstrap. |
-| `@scaleflex/crop/react`   | React component `<SfxCrop>`, `useSfxCrop` / `useSfxCropController` hooks, plus re-exports of `createCropController`, `mergeConfig`, `DEFAULT_CONFIG`, and the public types. |
+| `@scaleflex/image-crop`         | Side-effect-free entry. Exports `SfxCropElement`, `createCropController`, `mergeConfig`, `DEFAULT_CONFIG`, and all public types. |
+| `@scaleflex/image-crop/define`  | Side-effectful — registers the `<sfx-crop>` custom element. Import once at bootstrap. |
+| `@scaleflex/image-crop/react`   | React component `<SfxCrop>`, `useSfxCrop` / `useSfxCropController` hooks, plus re-exports of `createCropController`, `mergeConfig`, `DEFAULT_CONFIG`, and the public types. |
 
 ## Quick Start
 
@@ -120,7 +120,7 @@ endpoint (resolves `lit` for the browser):
 
 ```html
 <script type="module">
-  import '@scaleflex/crop/define';
+  import '@scaleflex/image-crop/define';
 </script>
 
 <sfx-crop
@@ -143,7 +143,7 @@ endpoint (resolves `lit` for the browser):
 ### React
 
 ```tsx
-import { SfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+import { SfxCrop, type SfxCropElement } from '@scaleflex/image-crop/react';
 import { useRef } from 'react';
 
 export function Editor() {
@@ -165,7 +165,7 @@ export function Editor() {
 
 ```html
 <!-- Self-contained bundle from the Scaleflex CDN -->
-<script src="https://cdn.scaleflex.com/crop/2.0.1/crop.min.js"></script>
+<script src="https://cdn.scaleflex.com/image-crop/2.0.1/image-crop.min.js"></script>
 <sfx-crop src="https://cdn.example.com/photo.jpg" crop-shape="square"></sfx-crop>
 ```
 
@@ -318,7 +318,7 @@ All events bubble and cross shadow boundaries (`bubbles: true, composed: true`).
 `forwardRef` component that mirrors the element's attributes as camelCase props and bridges every `sfx-crop-*` event into a matching `on*` callback.
 
 ```tsx
-import { SfxCrop } from '@scaleflex/crop/react';
+import { SfxCrop } from '@scaleflex/image-crop/react';
 
 <SfxCrop
   src="..."
@@ -343,7 +343,7 @@ The `ref` resolves to the underlying `SfxCropElement`, so every imperative metho
 For consumers who prefer to render `<sfx-crop>` themselves and pull stable callables off a hook:
 
 ```tsx
-import { useSfxCrop } from '@scaleflex/crop/react';
+import { useSfxCrop } from '@scaleflex/image-crop/react';
 
 const { ref, ready, save, reset, toBlob, getTransformState } = useSfxCrop();
 
@@ -404,7 +404,7 @@ sfx-crop::part(container) { /* ... */ }
 
 ## Types Reference
 
-All types live in `src/core/types.ts` and are re-exported from both `@scaleflex/crop` and `@scaleflex/crop/react`.
+All types live in `src/core/types.ts` and are re-exported from both `@scaleflex/image-crop` and `@scaleflex/image-crop/react`.
 
 - `CropShapeName` — `'free' | 'square' | 'circle' | 'rounded-rect' | '16:9' | …` plus any `"W:H"` string.
 - `CropRect` — `{ x, y, width, height }` in normalised `[0,1]` image coordinates.

@@ -9,7 +9,7 @@ import { resolve } from 'path';
  * with no import map or peer install. React is irrelevant here — the CDN
  * entry is the framework-agnostic custom element only.
  *
- * Output: dist-cdn/crop.min.js
+ * Output: dist-cdn/image-crop.min.js
  */
 export default defineConfig({
   build: {
@@ -19,7 +19,7 @@ export default defineConfig({
       entry: resolve(__dirname, '../src/define.ts'),
       formats: ['iife'],
       name: 'SfxCrop',
-      fileName: () => 'crop.min.js',
+      fileName: () => 'image-crop.min.js',
     },
     cssCodeSplit: false,
     minify: 'esbuild',

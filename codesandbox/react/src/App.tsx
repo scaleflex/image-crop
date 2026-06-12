@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { SfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+import { SfxCrop, type SfxCropElement } from '@scaleflex/image-crop/react';
 
 const IMAGE =
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2400&q=80';
@@ -18,7 +18,7 @@ export default function App() {
         color: '#111',
       }}
     >
-      <h1>@scaleflex/crop — React example</h1>
+      <h1>@scaleflex/image-crop — React example</h1>
       <p>
         Drag to pan, use the toolbar to rotate / flip / zoom / change the shape,
         then hit <strong>Crop &amp; preview</strong>.

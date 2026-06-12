@@ -1,7 +1,7 @@
 import { LitElement } from 'lit';
 
 /**
- * Shared base class for all @scaleflex/crop Lit elements.
+ * Shared base class for all @scaleflex/image-crop Lit elements.
  *
  * Provides:
  * - Safe guard for double custom-element registration (StrictMode-safe).

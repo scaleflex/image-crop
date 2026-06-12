@@ -1,17 +1,17 @@
 ---
 name: integrate-sfx-crop
-description: Helps Claude add the @scaleflex/crop image-crop editor to your project — detecting your framework, wiring up the custom element or React wrapper, configuring shapes/theme, and bridging events to your save flow. Trigger when the user asks to integrate, install, embed, or use @scaleflex/crop, <sfx-crop>, or "the Scaleflex crop editor".
+description: Helps Claude add the @scaleflex/image-crop image-crop editor to your project — detecting your framework, wiring up the custom element or React wrapper, configuring shapes/theme, and bridging events to your save flow. Trigger when the user asks to integrate, install, embed, or use @scaleflex/image-crop, <sfx-crop>, or "the Scaleflex crop editor".
 ---
 
-# Integrate `@scaleflex/crop`
+# Integrate `@scaleflex/image-crop`
 
 Use this skill whenever the user wants to add the Scaleflex image-crop editor to their codebase. Goal: produce a working integration in their app, not a generic copy-paste.
 
 ## Detection — pick the right entry point
 
 1. **Look at `package.json`** in the user's project:
-   - `react` / `react-dom` present → use `@scaleflex/crop/react`
-   - Vue / Svelte / Angular / vanilla → use `@scaleflex/crop` + `@scaleflex/crop/define`
+   - `react` / `react-dom` present → use `@scaleflex/image-crop/react`
+   - Vue / Svelte / Angular / vanilla → use `@scaleflex/image-crop` + `@scaleflex/image-crop/define`
 2. **Look at the build setup** (Vite / webpack / Next.js / Remix / Astro / plain `<script>`).
    - Module bundler → ESM imports.
    - Plain HTML → ESM-CDN or UMD via `<script type="module">`.
@@ -20,7 +20,7 @@ Use this skill whenever the user wants to add the Scaleflex image-crop editor to
 ## Install
 
 ```bash
-npm install @scaleflex/crop
+npm install @scaleflex/image-crop
 ```
 
 If a peer warning about React shows up and the project is non-React, ignore it — `react` / `react-dom` are declared optional peers.
@@ -29,7 +29,7 @@ If a peer warning about React shows up and the project is non-React, ignore it �
 
 ```html
 <script type="module">
-  import '@scaleflex/crop/define';
+  import '@scaleflex/image-crop/define';
 </script>
 
 <sfx-crop
@@ -53,7 +53,7 @@ The `define` import has side-effects — only import it once at the app entry.
 ## React integration
 
 ```tsx
-import { SfxCrop, type SfxCropElement } from '@scaleflex/crop/react';
+import { SfxCrop, type SfxCropElement } from '@scaleflex/image-crop/react';
 import { useRef } from 'react';
 
 export function CropDialog({ src, onDone }: { src: string; onDone: (b: Blob) => void }) {
@@ -70,7 +70,7 @@ export function CropDialog({ src, onDone }: { src: string; onDone: (b: Blob) => 
 }
 ```
 
-For SSR frameworks (Next.js App Router, Remix), the `@scaleflex/crop/react` module is browser-only because it touches `customElements`. Either:
+For SSR frameworks (Next.js App Router, Remix), the `@scaleflex/image-crop/react` module is browser-only because it touches `customElements`. Either:
 - mark the parent component `'use client'` (Next.js); or
 - dynamically import via `next/dynamic` with `ssr: false`.
 
@@ -138,12 +138,12 @@ Types ship with the package — no `@types/*` install needed. The most useful on
 Import them from the same entry you use for the runtime:
 
 ```ts
-import type { SfxCropProps, TransformParams } from '@scaleflex/crop/react';
+import type { SfxCropProps, TransformParams } from '@scaleflex/image-crop/react';
 ```
 
 ## Common pitfalls — fix proactively
 
-- **`<sfx-crop>` renders blank.** The `define` module wasn't imported. Add `import '@scaleflex/crop/define'` at the app entry, or use the React wrapper which does it for you.
+- **`<sfx-crop>` renders blank.** The `define` module wasn't imported. Add `import '@scaleflex/image-crop/define'` at the app entry, or use the React wrapper which does it for you.
 - **`Cannot find name 'sfx-crop'` in JSX.** Use the `<SfxCrop>` React component, not the lowercase tag, when in `.tsx`.
 - **Imperative method throws "not connected".** Wait for `sfx-crop-ready` (or `useSfxCrop().ready`) before calling methods.
 - **Cropped output is the wrong size.** `outputType` defaults to PNG; pass `'image/jpeg'` + `outputQuality` for photos. Set `maxOutputWidth` / `maxOutputHeight` to cap large images.
